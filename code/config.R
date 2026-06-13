@@ -279,8 +279,10 @@ tabla_aer <- function(df, name, titulo, subheader = NULL, notas = NULL,
            textDecoration = "Bold", halign = "left"),
            rows = dat_row0:(dat_row0 + n - 1L), cols = off_col, gridExpand = TRUE)
   if (ncol_df > 1) {
+    # Datos centrados, SIN bordes de fila (cuerpo en blanco). numFmt "@" marca
+    # las celdas como texto a propósito y suprime el aviso verde de Excel.
     addStyle(wb, sheet_name, createStyle(fontName = TNR, fontSize = 10,
-             halign = "center", border = "Bottom", borderColour = "#CCCCCC"),
+             halign = "center", numFmt = "@"),
              rows = dat_row0:(dat_row0 + n - 1L),
              cols = (off_col + 1L):(off_col + ncol_df - 1L), gridExpand = TRUE)
   }
@@ -289,14 +291,22 @@ tabla_aer <- function(df, name, titulo, subheader = NULL, notas = NULL,
   addStyle(wb, sheet_name, createStyle(border = "Bottom", borderColour = "#888888"),
            rows = dat_row0 + n - 1L, cols = cols, gridExpand = TRUE, stack = TRUE)
 
-  # Etiquetas de panel (negrita, sobre la fila indicada)
-  if (!is.null(paneles)) {
-    for (i in seq_along(paneles)) {
-      r <- dat_row0 + as.integer(paneles[i]) - 1L
-      writeData(wb, sheet_name, names(paneles)[i], startCol = off_col, startRow = r)
-      addStyle(wb, sheet_name, createStyle(fontName = TNR, fontSize = 10,
-               textDecoration = "Bold"), rows = r, cols = off_col, stack = TRUE)
-    }
+  # Etiquetas de panel: se detectan por la 1a columna que empieza con "Panel ".
+  # (también admite el parámetro `paneles` por compatibilidad.) Cada panel lleva
+  # negrita y una línea superior fina que lo separa (salvo el primero).
+  idx_panel <- which(grepl("^Panel ", trimws(as.character(df[[1]]))))
+  if (!is.null(paneles)) idx_panel <- as.integer(paneles)
+  for (k in idx_panel) {
+    r       <- dat_row0 + k - 1L
+    con_top <- k > 1L                            # sin línea en la 1a fila de datos
+    addStyle(wb, sheet_name, createStyle(fontName = TNR, fontSize = 10,
+             textDecoration = "Bold",
+             border = if (con_top) "Top" else NULL, borderColour = "#888888"),
+             rows = r, cols = off_col, stack = TRUE)
+    if (con_top)
+      addStyle(wb, sheet_name, createStyle(border = "Top", borderColour = "#888888"),
+               rows = r, cols = (off_col + 1L):(off_col + ncol_df - 1L),
+               gridExpand = TRUE, stack = TRUE)
   }
 
   # Notas al pie: 9pt, todo de corrido en una sola celda (mergeada sobre el ancho
