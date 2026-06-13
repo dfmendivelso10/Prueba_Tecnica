@@ -385,18 +385,22 @@ tabla_aer <- function(df, name, titulo, subheader = NULL, notas = NULL,
            rows = dat_row0 + n - 1L, cols = cols, gridExpand = TRUE, stack = TRUE)
 
   # Etiquetas de panel: se detectan por la 1a columna que empieza con "Panel ".
-  # (también admite el parámetro `paneles` por compatibilidad.) Cada panel queda
-  # encajonado: una línea medium ARRIBA de su etiqueta y otra ABAJO, al cierre.
+  # (también admite el parámetro `paneles` por compatibilidad.) La fila de la
+  # etiqueta queda ENCAJONADA igual que la fila N: línea medium ARRIBA y ABAJO
+  # de la propia etiqueta. Y al cierre del panel anterior, una línea medium bajo
+  # su fila N.
   idx_panel <- which(grepl("^Panel ", trimws(as.character(df[[1]]))))
   if (!is.null(paneles)) idx_panel <- as.integer(paneles)
   for (k in idx_panel) {
     r <- dat_row0 + k - 1L
-    # Etiqueta del panel en negrita, con línea superior medium a todo el ancho
+    # Etiqueta del panel en negrita, encajonada: medium arriba y abajo a todo
+    # el ancho (la celda de la etiqueta conserva además la negrita).
     addStyle(wb, sheet_name, createStyle(fontName = TNR, fontSize = 10,
-             textDecoration = "Bold", border = "Top", borderColour = "#888888",
-             borderStyle = "medium"), rows = r, cols = off_col, stack = TRUE)
-    addStyle(wb, sheet_name, createStyle(border = "Top", borderColour = "#888888",
-             borderStyle = "medium"),
+             textDecoration = "Bold", border = "TopBottom",
+             borderColour = "#888888", borderStyle = "medium"),
+             rows = r, cols = off_col, stack = TRUE)
+    addStyle(wb, sheet_name, createStyle(border = "TopBottom",
+             borderColour = "#888888", borderStyle = "medium"),
              rows = r, cols = (off_col + 1L):(off_col + ncol_df - 1L),
              gridExpand = TRUE, stack = TRUE)
     # Línea inferior medium al cierre del panel anterior: la fila justo encima
