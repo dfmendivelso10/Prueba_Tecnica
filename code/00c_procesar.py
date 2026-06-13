@@ -90,9 +90,8 @@ base = base.merge(brent, on="anio", how="left")
 fiscal = pd.read_csv(os.path.join(ROOT, "data", "raw", "fiscal_wb.csv"))
 base = base.merge(fiscal, on=["iso", "anio"], how="left")
 
-# Añadir riesgo país (EMBIG); solo lo tienen los países que emiten deuda en USD
-riesgo = pd.read_csv(os.path.join(ROOT, "data", "raw", "riesgo_pais.csv"))
-base = base.merge(riesgo, on=["iso", "anio"], how="left")
+# Nota: el riesgo país (EMBIG, data/raw/riesgo_pais.csv) se excluye del panel:
+# solo cubre 8 países que emiten deuda en USD (70/306), sesgaría la muestra.
 
 # Panel por combustible: relacionar cada código con su combustible y componente
 filas_mapa = []

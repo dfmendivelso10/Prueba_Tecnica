@@ -19,32 +19,66 @@ XLSB = os.path.join(ROOT, "data", "raw", "imffossilfuelsubsidiesdata.xlsb")
 OUT = os.path.join(ROOT, "docs", "diccionario_variables.xlsx")
 FUENTE = "IMF - Fossil Fuel Subsidies Database"
 
-# Hoja 1: variables de los paneles procesados (nombre, significado, unidad, MTCode)
-paneles = [
-    ("Panel país×año", "iso", "Código ISO3 del país", "", ""),
-    ("Panel país×año", "pais", "Nombre del país", "", ""),
-    ("Panel país×año", "region", "Región (clasificación Banco Mundial)", "", ""),
-    ("Panel país×año", "incomelevel", "Nivel de ingreso del país", "", ""),
-    ("Panel país×año", "latam", "Indicador: país de América Latina y el Caribe", "TRUE/FALSE", ""),
-    ("Panel país×año", "anio", "Año (datos observados 2015-2023)", "año", ""),
-    ("Panel país×año", "expl_total", "Subsidio explícito total a combustibles fósiles", "USD miles de millones", "mit.expsub.con.all.all.1"),
-    ("Panel país×año", "impl_total", "Subsidio implícito total (externalidades + IVA no aplicado)", "USD miles de millones", "mit.impsub.con.all.all.1"),
-    ("Panel país×año", "tot_total", "Subsidio total (explícito + implícito)", "USD miles de millones", "mit.allsub.con.all.all.1"),
-    ("Panel país×año", "expl_pctgdp", "Subsidio explícito como fracción del PIB", "fracción (×100 = %)", "mit.expsubgdp.con.all.all.1"),
-    ("Panel país×año", "impl_pctgdp", "Subsidio implícito como fracción del PIB", "fracción (×100 = %)", "mit.impsubgdp.con.all.all.1"),
-    ("Panel país×año", "tot_pctgdp", "Subsidio total como fracción del PIB", "fracción (×100 = %)", "mit.allsubgdp.con.all.all.1"),
-    ("Panel país×año", "gdp", "PIB (línea base)", "USD miles de millones", "mit.gdp.pre.lvl.1"),
-    ("Panel país×año", "pop", "Población", "millones de habitantes", "mit.pop.mn"),
-    ("Panel país×año", "rev_usd", "Ingreso fiscal neto de subsidios", "USD miles de millones", "mit.rev.new.usd.1"),
-    ("Panel país×año", "eff_cost", "Costo de eficiencia (peso muerto)", "USD miles de millones", "mit.wel.eco.dwl.usd"),
-    ("Panel país×año", "subsidio_pc_usd", "Subsidio total per cápita (tot_total / pop)", "USD por habitante", "derivada"),
-    ("Panel país×año", "expl_share", "Participación del componente explícito en el total", "fracción", "derivada"),
-    ("Panel combustible", "combustible", "Tipo de combustible", "", ""),
-    ("Panel combustible", "explicito", "Subsidio explícito del combustible", "USD miles de millones", "mit.expsub.con.<fuel>.all.1"),
-    ("Panel combustible", "implicito", "Subsidio implícito del combustible", "USD miles de millones", "mit.impsub.con.<fuel>.all.1"),
-    ("Panel combustible", "total", "Subsidio total del combustible (explícito + implícito)", "USD miles de millones", "derivada"),
-]
-df_paneles = pd.DataFrame(paneles, columns=["panel", "variable", "significado", "unidad", "mtcode_imf"])
+# Hoja 1: se lee de los paneles procesados reales y se glosa cada columna.
+# Glosa por variable: (significado, unidad, fuente, mtcode/origen). Leer las columnas
+# del .xlsx en vez de listarlas a mano evita que el diccionario se desincronice del panel.
+PROC = os.path.join(ROOT, "data", "processed")
+WB = "World Bank (WDI)"
+GLOSA = {
+    "iso": ("Código ISO3 del país", "", FUENTE, ""),
+    "pais": ("Nombre del país", "", FUENTE, ""),
+    "region": ("Región (clasificación Banco Mundial)", "", FUENTE, ""),
+    "incomelevel": ("Nivel de ingreso del país", "", FUENTE, ""),
+    "anio": ("Año (datos observados 2015-2023)", "año", FUENTE, ""),
+    "exportador_neto": ("Indicador: exportador neto de hidrocarburos (VEN, ECU, COL, MEX, TTO, BOL, GUY)", "TRUE/FALSE", "Clasificación propia (EIA/BP)", "derivada"),
+    "expl_total": ("Subsidio explícito total a combustibles fósiles", "USD miles de millones", FUENTE, "mit.expsub.con.all.all.1"),
+    "impl_total": ("Subsidio implícito total (externalidades + IVA no aplicado)", "USD miles de millones", FUENTE, "mit.impsub.con.all.all.1"),
+    "tot_total": ("Subsidio total (explícito + implícito)", "USD miles de millones", FUENTE, "mit.allsub.con.all.all.1"),
+    "expl_pctgdp": ("Subsidio explícito como fracción del PIB", "fracción (×100 = %)", FUENTE, "mit.expsubgdp.con.all.all.1"),
+    "impl_pctgdp": ("Subsidio implícito como fracción del PIB", "fracción (×100 = %)", FUENTE, "mit.impsubgdp.con.all.all.1"),
+    "tot_pctgdp": ("Subsidio total como fracción del PIB", "fracción (×100 = %)", FUENTE, "mit.allsubgdp.con.all.all.1"),
+    "expl_oil": ("Subsidio explícito - petróleo", "USD miles de millones", FUENTE, "mit.expsub.con.oil.all.1"),
+    "expl_nga": ("Subsidio explícito - gas natural", "USD miles de millones", FUENTE, "mit.expsub.con.nga.all.1"),
+    "expl_ecy": ("Subsidio explícito - electricidad", "USD miles de millones", FUENTE, "mit.expsub.con.ecy.all.1"),
+    "impl_oil": ("Subsidio implícito - petróleo", "USD miles de millones", FUENTE, "mit.impsub.con.oil.all.1"),
+    "impl_nga": ("Subsidio implícito - gas natural", "USD miles de millones", FUENTE, "mit.impsub.con.nga.all.1"),
+    "gdp": ("PIB (línea base)", "USD miles de millones", FUENTE, "mit.gdp.pre.lvl.1"),
+    "pop": ("Población", "millones de habitantes", FUENTE, "mit.pop.mn"),
+    "rev_usd": ("Ingreso fiscal por remover subsidios", "USD miles de millones", FUENTE, "mit.rev.new.usd.1"),
+    "rev_pctgdp": ("Ingreso fiscal por remover subsidios", "fracción (×100 = %)", FUENTE, "mit.rev.new.pct.1"),
+    "eff_cost_usd": ("Costo de eficiencia (peso muerto)", "USD miles de millones", FUENTE, "mit.wel.eco.dwl.usd"),
+    "eff_cost_pctgdp": ("Costo de eficiencia (peso muerto)", "fracción (×100 = %)", FUENTE, "mit.wel.eco.dwl.pct"),
+    "precio_gso": ("Precio al consumidor - gasolina", "USD por litro", FUENTE, "mit.rp.gso.all.1"),
+    "precio_die": ("Precio al consumidor - diésel", "USD por litro", FUENTE, "mit.rp.die.all.1"),
+    "precio_nga": ("Precio al consumidor - gas natural (residencial)", "USD por GJ", FUENTE, "mit.rp.nga.res.1"),
+    "costo_gso": ("Costo de suministro - gasolina", "USD por litro", FUENTE, "mit.sup.cost.gso.all.1"),
+    "costo_die": ("Costo de suministro - diésel", "USD por litro", FUENTE, "mit.sup.cost.die.all.1"),
+    "costo_nga": ("Costo de suministro - gas natural (residencial)", "USD por GJ", FUENTE, "mit.sup.cost.nga.res.1"),
+    "brent_usd": ("Precio internacional del petróleo Brent (promedio anual)", "USD por barril", "EIA", "brent_anual.csv"),
+    "balance_fiscal": ("Balance fiscal del gobierno central", "% del PIB", WB, "GC.NLD.TOTL.GD.ZS"),
+    "deuda_publica": ("Deuda del gobierno central", "% del PIB", WB, "GC.DOD.TOTL.GD.ZS"),
+    "ingreso_publico": ("Ingreso público", "% del PIB", WB, "GC.REV.XGRT.GD.ZS"),
+    "subsidio_pc_usd": ("Subsidio total per cápita (tot_total / pop)", "USD por habitante", "Derivada", "derivada"),
+    "expl_share": ("Participación del componente explícito en el total", "fracción", "Derivada", "derivada"),
+    "brecha_gso": ("Brecha de precio - gasolina (precio - costo): subsidio explícito unitario", "USD por litro", "Derivada", "derivada"),
+    "brecha_die": ("Brecha de precio - diésel (precio - costo)", "USD por litro", "Derivada", "derivada"),
+    "brecha_nga": ("Brecha de precio - gas natural (precio - costo)", "USD por GJ", "Derivada", "derivada"),
+    "combustible": ("Tipo de combustible", "", FUENTE, ""),
+    "explicito": ("Subsidio explícito del combustible", "USD miles de millones", FUENTE, "mit.expsub.con.<fuel>.all.1"),
+    "implicito": ("Subsidio implícito del combustible", "USD miles de millones", FUENTE, "mit.impsub.con.<fuel>.all.1"),
+    "total": ("Subsidio total del combustible (explícito + implícito)", "USD miles de millones", "Derivada", "derivada"),
+}
+
+filas = []
+for etiqueta, archivo in [("Panel país×año", "panel_pais_anio.xlsx"),
+                          ("Panel combustible", "panel_pais_anio_combustible.xlsx")]:
+    for col in pd.read_excel(os.path.join(PROC, archivo), nrows=0).columns:
+        sig, uni, fte, mt = GLOSA.get(col, ("[PENDIENTE glosar]", "", "", ""))
+        filas.append((etiqueta, col, sig, uni, fte, mt))
+df_paneles = pd.DataFrame(filas, columns=["panel", "variable", "significado", "unidad", "fuente", "mtcode_imf"])
+faltan = df_paneles[df_paneles.significado == "[PENDIENTE glosar]"]["variable"].tolist()
+if faltan:
+    print(f"  Advertencia: columnas sin glosa en GLOSA: {faltan}")
 
 # Hoja 2: catálogo completo de las 234 variables crudas (mtcode + descripción del .xlsb)
 # Leyendas para descifrar el código mit.<concepto>.<combustible>.<uso>.<escenario>
@@ -104,7 +138,6 @@ catalogo = catalogo[["mtcode_imf", "descripcion", "concepto", "combustible",
                      "uso_final", "escenario", "desc_imf", "fuente"]]
 
 # Guardar ambas hojas
-df_paneles["fuente"] = FUENTE
 df_paneles = df_paneles[["panel", "variable", "significado", "unidad", "fuente", "mtcode_imf"]]
 with pd.ExcelWriter(OUT) as xl:
     df_paneles.to_excel(xl, sheet_name="Paneles", index=False)

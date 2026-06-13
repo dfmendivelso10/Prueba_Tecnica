@@ -40,6 +40,9 @@ Rscript -e 'install.packages(c("here","tidyverse","readxl","writexl","openxlsx",
 # 1) Descargar fuentes complementarias (precio Brent y datos fiscales)
 python3 code/00a_descargar_brent.py
 python3 code/00b_descargar_fiscal.py
+# Opcionales (descargadas pero no integradas al panel; ver data/raw/FUENTES.md)
+python3 code/00d_descargar_riesgo.py     # riesgo país EMBIG
+python3 code/00e_descargar_reservas.py   # reservas internacionales
 
 # 2) Procesamiento: IMF + Brent + fiscal -> paneles en data/processed/  (~9 s)
 python3 code/00c_procesar.py

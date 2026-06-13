@@ -28,9 +28,18 @@ df["brecha_gso"] = df["precio_gso"] - df["costo_gso"]
 df["brecha_die"] = df["precio_die"] - df["costo_die"]
 df["brecha_nga"] = df["precio_nga"] - df["costo_nga"]
 
+# Exportador neto de hidrocarburos: eje de heterogeneidad del choque. Importadores
+# enfrentan mayor costo de subsidiar con Brent alto; exportadores reciben renta que
+# amortigua. Clasificación EIA/BP: crudo (VEN, ECU, COL, MEX, TTO), gas (BOL) y el
+# entrante reciente GUY (campo Stabroek desde 2019).
+EXPORTADORES = {"VEN", "ECU", "COL", "MEX", "TTO", "BOL", "GUY"}
+df["exportador_neto"] = df["iso"].isin(EXPORTADORES)
+
 print(f"Panel de análisis: {df.shape[0]} filas × {df.shape[1]} columnas")
-print(df[["iso", "anio", "subsidio_pc_usd", "expl_share",
-          "brecha_gso", "brecha_die", "brecha_nga"]].head(), "\n")
+print(f"Exportadores netos: {df[df.exportador_neto].iso.nunique()} países | "
+      f"importadores: {df[~df.exportador_neto].iso.nunique()}")
+print(df[["iso", "anio", "exportador_neto", "subsidio_pc_usd", "expl_share",
+          "brecha_gso", "brecha_die"]].head(), "\n")
 
 df.to_excel(os.path.join(PROC, "panel_pais_anio.xlsx"), index=False)
 print("Panel guardado en data/processed/panel_pais_anio.xlsx")
