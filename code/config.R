@@ -237,14 +237,16 @@ save_fig_png <- function(plot, name, nota, fuente = NULL,
   # Nota al pie de corrido. La fuente se fija a un tamano PROPORCIONAL al chart
   # (~8pt = dpi*0.11 px), no se infla para llenar el ancho: forzar el texto de
   # borde a borde lo agranda mas que los ejes de la figura. El texto se envuelve
-  # en las lineas que necesite dentro del ancho disponible (Times ~0.404 px de
-  # ancho por unidad de fuente, medido empiricamente).
+  # dentro del ancho disponible. El ancho medio de caracter Times en magick es
+  # ~0.50 px por unidad de fuente; se usa 0.52 para dejar holgura y que ninguna
+  # linea se desborde por el borde derecho (antes 0.404 desbordaba en figuras
+  # angostas y altas como el dot plot).
   texto     <- paste0("Notas. ", nota,
                       if (!is.null(fuente)) paste0(" Fuente: ", fuente))
   margen    <- as.integer(round(dpi * 0.12))
   ancho_txt <- w_px - 2 * margen
   fs        <- as.integer(round(dpi * 0.11))      # ~33px = 8pt a 300dpi
-  por_linea <- floor(ancho_txt / (fs * 0.404))    # cols que caben a esa fuente
+  por_linea <- floor(ancho_txt / (fs * 0.52))     # cols que caben a esa fuente
   envuelto  <- paste(strwrap(texto, width = por_linea), collapse = "\n")
   n_lineas  <- length(strsplit(envuelto, "\n")[[1L]])
   h_nota    <- n_lineas * round(fs * 1.45) + margen
@@ -420,10 +422,14 @@ tabla_aer <- function(df, name, titulo, subheader = NULL, notas = NULL,
     mergeCells(wb, sheet_name, cols = cols, rows = nr)
     addStyle(wb, sheet_name, createStyle(fontName = TNR, fontSize = 9,
              valign = "top", wrapText = TRUE), rows = nr, cols = off_col)
-    # Alto estimado de la fila según largo del texto y ancho disponible
-    ancho_chars <- 22 + 14 * max(ncol_df - 1L, 0)
-    setRowHeights(wb, sheet_name, rows = nr,
-                  heights = 14 * ceiling(nchar(texto) / ancho_chars) + 4)
+    # Alto de la fila de notas ajustado al texto real. El factor 1.7 convierte
+    # unidades de ancho de columna a caracteres Times 9pt: la fuente de notas
+    # es más pequeña que la por defecto, así que caben ~1.7 caracteres por
+    # unidad de ancho. Cada línea ocupa ~12.5 pt (9pt + interlineado) y sin
+    # colchón extra, para que no quede aire en blanco bajo las notas.
+    ancho_chars <- (22 + ancho_datos * max(ncol_df - 1L, 0)) * 1.7
+    n_lineas    <- ceiling(nchar(texto) / ancho_chars)
+    setRowHeights(wb, sheet_name, rows = nr, heights = 12.5 * n_lineas)
   }
 
   # Anchos (col A margen=2; nombre de variable=22; datos=14) y alturas
