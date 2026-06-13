@@ -26,11 +26,14 @@ SUB <- list(
   y23 = df[df$anio == 2023, ]
 )
 
-# Media (DE); esc = factor de escala (100 para pasar fracción de PIB a %)
+# Mediana [P25, P75]; esc = factor de escala (100 para pasar fracción de PIB a %).
+# Se usa mediana + IQR (no media + DE) por la fuerte asimetría: ~1/3 de los país-año
+# tienen subsidio nulo y unos pocos países concentran montos muy altos.
 md <- function(x, esc = 1) {
   x <- x[!is.na(x)] * esc
   if (!length(x)) return("-")
-  paste0(fmt_num(mean(x), 2), " (", fmt_num(sd(x), 2), ")")
+  q <- quantile(x, c(.25, .5, .75), names = FALSE)
+  paste0(fmt_num(q[2], 2), " [", fmt_num(q[1], 2), ", ", fmt_num(q[3], 2), "]")
 }
 
 # Una fila: variable en Total + los cinco subgrupos
@@ -92,7 +95,10 @@ tabla_aer(
   notas = c(
     paste("Estadística descriptiva del panel país-año de América Latina y el Caribe,",
           "2015-2023."),
-    "Cada celda reporta la media entre países con la desviación estándar entre paréntesis.",
+    paste("Cada celda reporta la mediana entre países con el rango intercuartílico",
+          "[P25, P75] entre corchetes; los subsidios en niveles están en USD miles de",
+          "millones. Se usa la mediana por la fuerte asimetría de la distribución (cerca",
+          "de un tercio de los país-año no aplican subsidio explícito)."),
     paste("Las columnas desagregan la muestra completa (1) por condición de exportador neto",
           "de hidrocarburos (2)-(3) y por período relativo al choque petrolero de 2022 (4)-(6);",
           "exportadores netos: Bolivia, Colombia, Ecuador, Guyana, México, Trinidad y Tobago y",
