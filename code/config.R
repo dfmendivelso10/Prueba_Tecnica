@@ -232,7 +232,7 @@ guardar_tabla <- function(df, name, sheet_name = "Datos") {
 #'            como c("Panel A. ..." = 1, "Panel B. ..." = 5) (fila relativa a los datos).
 #' Layout: columna A vacía (margen), líneas horizontales, sin verticales ni sombreado.
 tabla_aer <- function(df, name, titulo, subheader = NULL, notas = NULL,
-                      paneles = NULL, sheet_name = "Tabla") {
+                      paneles = NULL, ancho_datos = 14, sheet_name = "Tabla") {
   TNR <- "Times New Roman"
   wb <- createWorkbook()
   addWorksheet(wb, sheet_name, gridLines = FALSE)
@@ -328,7 +328,8 @@ tabla_aer <- function(df, name, titulo, subheader = NULL, notas = NULL,
   setColWidths(wb, sheet_name, cols = 1, widths = 2)
   setColWidths(wb, sheet_name, cols = off_col, widths = 22)
   if (ncol_df > 1) setColWidths(wb, sheet_name,
-                                cols = (off_col + 1L):(off_col + ncol_df - 1L), widths = 14)
+                                cols = (off_col + 1L):(off_col + ncol_df - 1L),
+                                widths = ancho_datos)
   setRowHeights(wb, sheet_name, rows = off_row, heights = 22)
   setRowHeights(wb, sheet_name, rows = hdr_row, heights = 18)
 
