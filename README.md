@@ -12,10 +12,12 @@ fósiles en LATAM, y qué implica para la política fiscal y de subsidios?
 ## Fuentes de datos
 
 - **IMF Fossil Fuel Subsidies Database** (obligatoria) — subsidios explícitos e implícitos.
-- Complementarias (opcionales): IMF WEO, World Bank WDI, precio Brent/WTI (IMF PCPS / EIA),
-  GTED, OECD.
+- **EIA** — precio internacional del petróleo Brent (el choque).
+- **World Bank (WDI)** — indicadores fiscales (balance, deuda, ingreso público).
 
-Los archivos crudos van en `data/raw/` con su fuente, URL y fecha de descarga documentadas.
+Descargadas como referencia pero no integradas al panel: riesgo país EMBIG (BCRP) y
+reservas internacionales (World Bank). El detalle de cada fuente, con URL y motivo de
+inclusión o exclusión, está en `data/raw/FUENTES.md`.
 
 ## Estructura
 
