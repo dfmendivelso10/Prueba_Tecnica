@@ -1,14 +1,17 @@
-# Tabla 1 - Estadística descriptiva de subsidios y contexto fiscal
+# Tabla 1 - Evolución anual de los subsidios por grupo (2015-2023)
 # Autor: Daniel Mendivelso
 # Fecha: 2026-06-13
 #
 # Descripcion:
-#   Tabla descriptiva del panel país-año. Filas = variables (Media (DE)),
-#   columnas = subgrupos en dos ejes: exposición (exportador/importador) y
-#   tiempo (pre-choque 2015-2021, choque 2022, post 2023). Tres paneles:
-#     Panel A: subsidios en USD miles de millones
-#     Panel B: subsidios como % del PIB
-#     Panel C: choque y contexto fiscal
+#   Tabla descriptiva principal, en orientación horizontal (landscape).
+#   Años en columnas (2015-2023), subsidios en filas, en tres paneles por
+#   grupo de exposición al choque:
+#     Panel A: Total LATAM
+#     Panel B: Exportadores netos de hidrocarburos
+#     Panel C: Importadores netos
+#   Cada panel reporta el subsidio explícito y total (suma regional USD bn
+#   y % del PIB del grupo). Muestra a la vez la trayectoria del choque y la
+#   heterogeneidad entre exportadores e importadores.
 #
 # Input:  data/processed/panel_pais_anio.xlsx
 # Output: outputs/tables/tab1_descriptiva.xlsx
@@ -16,95 +19,60 @@
 source(here::here("code/config.R"))
 
 df <- cargar_panel_anio()
+anios <- sort(unique(df$anio))
 
-# Subgrupos por columna
-SUB <- list(
-  exp = df[df$exportador_neto, ],
-  imp = df[!df$exportador_neto, ],
-  pre = df[df$anio <= 2021, ],
-  y22 = df[df$anio == 2022, ],
-  y23 = df[df$anio == 2023, ]
-)
-
-# Mediana [P25, P75]; esc = factor de escala (100 para pasar fracción de PIB a %).
-# Se usa mediana + IQR (no media + DE) por la fuerte asimetría: ~1/3 de los país-año
-# tienen subsidio nulo y unos pocos países concentran montos muy altos.
-md <- function(x, esc = 1) {
-  x <- x[!is.na(x)] * esc
-  if (!length(x)) return("-")
-  q <- quantile(x, c(.25, .5, .75), names = FALSE)
-  paste0(fmt_num(q[2], 2), " [", fmt_num(q[1], 2), ", ", fmt_num(q[3], 2), "]")
+# Suma de una variable por año dentro de un subconjunto de filas
+serie_suma <- function(d, var) {
+  sapply(anios, function(a) sum(d[[var]][d$anio == a], na.rm = TRUE))
+}
+# Subsidio como % del PIB del grupo = suma subsidio / suma PIB, por año
+serie_pctpib <- function(d, var) {
+  sapply(anios, function(a) {
+    s <- d$anio == a
+    100 * sum(d[[var]][s], na.rm = TRUE) / sum(d$gdp[s], na.rm = TRUE)
+  })
 }
 
-# Una fila: variable en Total + los cinco subgrupos
-fila <- function(label, var, esc = 1) {
-  tibble(
-    Variable = paste0("  ", label),
-    Total    = md(df[[var]], esc),
-    Export   = md(SUB$exp[[var]], esc),
-    Import   = md(SUB$imp[[var]], esc),
-    Pre      = md(SUB$pre[[var]], esc),
-    Y2022    = md(SUB$y22[[var]], esc),
-    Y2023    = md(SUB$y23[[var]], esc)
+# Una fila: etiqueta + un valor por año
+fila <- function(label, valores, dec = 1) {
+  as_tibble(c(list(Variable = paste0("  ", label)),
+              setNames(as.list(fmt_num(valores, dec)), as.character(anios))))
+}
+fila_lbl <- function(txt) {
+  as_tibble(c(list(Variable = txt),
+              setNames(as.list(rep("", length(anios))), as.character(anios))))
+}
+
+# Bloque de cuatro filas (explícito y total, en USD bn y %PIB) para un grupo
+bloque <- function(etiqueta, d) {
+  bind_rows(
+    fila_lbl(etiqueta),
+    fila("Explícito (USD bn)", serie_suma(d, "expl_total")),
+    fila("Total (USD bn)",     serie_suma(d, "tot_total")),
+    fila("Explícito (% PIB)",  serie_pctpib(d, "expl_total"), dec = 2),
+    fila("Total (% PIB)",      serie_pctpib(d, "tot_total"),  dec = 2)
   )
 }
 
-# Fila de etiqueta de panel (resto vacío)
-panel <- function(label) {
-  tibble(Variable = label, Total = "", Export = "", Import = "",
-         Pre = "", Y2022 = "", Y2023 = "")
-}
-
-# Fila N (tamaños de muestra por subgrupo)
-fila_n <- function() {
-  tibble(Variable = "N (país-año)", Total = as.character(nrow(df)),
-         Export = as.character(nrow(SUB$exp)), Import = as.character(nrow(SUB$imp)),
-         Pre = as.character(nrow(SUB$pre)), Y2022 = as.character(nrow(SUB$y22)),
-         Y2023 = as.character(nrow(SUB$y23)))
-}
-
 tabla <- bind_rows(
-  panel("Panel A. Subsidios (USD miles de millones)"),
-  fila("Explícito",  "expl_total"),
-  fila("Implícito",  "impl_total"),
-  fila("Total",      "tot_total"),
-
-  panel("Panel B. Subsidios (% del PIB)"),
-  fila("Explícito",  "expl_pctgdp", esc = 100),
-  fila("Implícito",  "impl_pctgdp", esc = 100),
-  fila("Total",      "tot_pctgdp",  esc = 100),
-
-  panel("Panel C. Canal de precios y contexto fiscal"),
-  fila("Brecha de precio gasolina",  "brecha_gso"),
-  fila("Brecha de precio diésel",    "brecha_die"),
-  fila("Balance fiscal (% PIB) (a)", "balance_fiscal"),
-  fila("Ingreso público (% PIB) (a)","ingreso_publico"),
-
-  fila_n()
+  bloque("Panel A. Total LATAM", df),
+  bloque("Panel B. Exportadores netos de hidrocarburos", filter(df, exportador_neto)),
+  bloque("Panel C. Importadores netos", filter(df, !exportador_neto))
 )
-
-# Encabezados legibles para las columnas
-names(tabla) <- c("Variable", "Total", "Exportadores", "Importadores",
-                  "2015-2021", "2022", "2023")
 
 tabla_aer(
   tabla,
-  name      = "tab1_descriptiva.xlsx",
-  titulo    = "Tabla 1. Estadística descriptiva de subsidios y contexto fiscal",
-  subheader = c("", "(1)", "(2)", "(3)", "(4)", "(5)", "(6)"),
+  name        = "tab1_descriptiva.xlsx",
+  titulo      = "Tabla 1. Evolución anual de los subsidios a combustibles fósiles (2015-2023)",
+  ancho_datos = 8,
+  landscape   = TRUE,
   notas = c(
-    paste("Estadística descriptiva del panel país-año de América Latina y el Caribe,",
-          "2015-2023."),
-    paste("Cada celda reporta la mediana entre países con el rango intercuartílico",
-          "[P25, P75] entre corchetes; los subsidios en niveles están en USD miles de",
-          "millones. Se usa la mediana por la fuerte asimetría de la distribución (cerca",
-          "de un tercio de los país-año no aplican subsidio explícito)."),
-    paste("Las columnas desagregan la muestra completa (1) por condición de exportador neto",
-          "de hidrocarburos (2)-(3) y por período relativo al choque petrolero de 2022 (4)-(6);",
-          "exportadores netos: Bolivia, Colombia, Ecuador, Guyana, México, Trinidad y Tobago y",
-          "Venezuela."),
-    paste("(a) Cobertura parcial: la fuente no reporta el dato para todos los país-año.",
-          "Las brechas de precio son el precio al consumidor menos el costo de suministro."),
-    "Fuentes: IMF Fossil Fuel Subsidies Database y World Bank (WDI)."
+    paste("Subsidios a combustibles fósiles en América Latina y el Caribe (34 países),",
+          "por año y grupo de exposición, alrededor del choque petrolero de 2022."),
+    paste("Cada celda es la suma del grupo en el año: en USD miles de millones (USD bn) y",
+          "como porcentaje del PIB agregado del grupo. Exportadores netos: Bolivia, Colombia,",
+          "Ecuador, Guyana, México, Trinidad y Tobago y Venezuela; el resto son importadores",
+          "netos."),
+    "Fuente: IMF Fossil Fuel Subsidies Database."
   )
 )

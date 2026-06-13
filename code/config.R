@@ -232,10 +232,12 @@ guardar_tabla <- function(df, name, sheet_name = "Datos") {
 #'            como c("Panel A. ..." = 1, "Panel B. ..." = 5) (fila relativa a los datos).
 #' Layout: columna A vacía (margen), líneas horizontales, sin verticales ni sombreado.
 tabla_aer <- function(df, name, titulo, subheader = NULL, notas = NULL,
-                      paneles = NULL, ancho_datos = 14, sheet_name = "Tabla") {
+                      paneles = NULL, ancho_datos = 14, landscape = FALSE,
+                      sheet_name = "Tabla") {
   TNR <- "Times New Roman"
   wb <- createWorkbook()
-  addWorksheet(wb, sheet_name, gridLines = FALSE)
+  addWorksheet(wb, sheet_name, gridLines = FALSE,
+               orientation = if (landscape) "landscape" else "portrait")
 
   off_col <- 2L                       # columna A vacía (margen izquierdo)
   off_row <- 1L                       # fila 1 = título
