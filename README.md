@@ -60,6 +60,13 @@ El procesamiento está en Python (pyxlsb) porque leer el `.xlsb` del IMF en R es
 prohibitivamente lento; el análisis es 100% R. Todos los outputs se regeneran desde
 `data/raw/`.
 
+## Convenciones visuales
+
+Las figuras siguen la paleta del **World Bank Data Visualization Style Guide**
+(https://wbg-vis-design.vercel.app/, paquetes `wbpyplot` / `wbplot`), con tipografía
+Times New Roman. Las tablas siguen un estándar tipo AER (Times New Roman, solo líneas
+horizontales, notas al pie). Ambos se definen de forma centralizada en `code/config.R`.
+
 ## Entregables
 
 1. Datos — `data/`
