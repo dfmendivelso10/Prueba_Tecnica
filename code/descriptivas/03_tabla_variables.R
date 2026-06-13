@@ -5,10 +5,9 @@
 # Descripcion:
 #   Estadística descriptiva de las variables que entran al análisis, por grupo
 #   de exposición fiscal (total, exportadores netos, importadores netos).
-#   Formato media (DE). Tres bloques temáticos:
+#   Formato media (DE). Dos bloques temáticos:
 #     Panel A: subsidios a combustibles fósiles (% del PIB) - el resultado
-#     Panel B: mecanismo de transmisión, brechas precio-costo (USD/litro o /MMBtu)
-#     Panel C: choque - precio internacional del Brent (USD/barril), serie global
+#     Panel B: choque - precio internacional del Brent (USD/barril), serie global
 #   El Brent es común a todos los países cada año (serie internacional), por lo
 #   que no se desagrega por grupo: se reporta como contexto del período.
 #
@@ -60,14 +59,7 @@ tabla <- bind_rows(
   fila_var("Subsidio implícito",  "impl_pctgdp", 100),
   fila_var("Subsidio total",      "tot_pctgdp",  100),
   fila_n(),
-  fila_lbl("Panel B. Mecanismo de transmisión: brecha precio-costo"),
-  fila_var("Brecha gasolina (USD/litro)",       "brecha_gso"),
-  fila_var("Brecha diésel (USD/litro)",         "brecha_die"),
-  fila_var("Brecha gas natural (USD/MMBtu)",    "brecha_nga"),
-  fila_var("Precio gasolina al consumidor (USD/litro)", "precio_gso"),
-  fila_var("Costo de suministro gasolina (USD/litro)",  "costo_gso"),
-  fila_n(),
-  fila_lbl("Panel C. Choque: precio internacional del petróleo"),
+  fila_lbl("Panel B. Choque: precio internacional del petróleo"),
   fila_brent
 )
 
@@ -91,9 +83,7 @@ tabla_aer(
           "directa cuando el alza del costo de suministro no se traslada al precio al consumidor.",
           "El implícito depende del volumen consumido y de parámetros de daño ambiental, no del",
           "precio del petróleo, por lo que apenas responde al choque en el corto plazo."),
-    paste("Las brechas precio-costo (Panel B) son el canal de transmisión: una brecha negativa",
-          "indica precio al consumidor por debajo del costo de suministro, es decir, subsidio."),
-    paste("El precio del Brent (Panel C) es la serie internacional, común a todos los países",
+    paste("El precio del Brent (Panel B) es la serie internacional, común a todos los países",
           "cada año, por lo que no se desagrega por grupo (se marca con guion)."),
     paste("La clasificación es por exposición fiscal neta al precio del petróleo, no por",
           "producción: en los exportadores netos el alza del Brent infla la renta petrolera",
