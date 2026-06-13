@@ -109,7 +109,7 @@ fig <- ggplot(dat, aes(x = cambio, y = pais, colour = grupo)) +
        y = NULL, colour = NULL) +
   tema_wb_ts() +
   theme(
-    panel.grid.major.y = element_line(colour = WB_GRID, linewidth = 0.2),
+    panel.grid.major.y = element_blank(),   # sin lineas horizontales por pais
     panel.grid.major.x = element_blank(),
     panel.grid.minor   = element_blank(),
     axis.text.y        = element_text(size = 7.5, family = "Times New Roman"),
