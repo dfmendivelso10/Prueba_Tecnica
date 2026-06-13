@@ -20,3 +20,6 @@ venv/
 # Temporales
 *.tmp
 ~$*
+
+# Logs de ejecución (reproducibles, no entregable)
+logs/

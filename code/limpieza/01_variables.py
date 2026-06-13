@@ -28,10 +28,17 @@ df["brecha_gso"] = df["precio_gso"] - df["costo_gso"]
 df["brecha_die"] = df["precio_die"] - df["costo_die"]
 df["brecha_nga"] = df["precio_nga"] - df["costo_nga"]
 
-# Exportador neto de hidrocarburos: eje de heterogeneidad del choque. Importadores
-# enfrentan mayor costo de subsidiar con Brent alto; exportadores reciben renta que
-# amortigua. Clasificación EIA/BP: crudo (VEN, ECU, COL, MEX, TTO), gas (BOL) y el
-# entrante reciente GUY (campo Stabroek desde 2019).
+# Exportador neto de hidrocarburos: eje de heterogeneidad del choque. El criterio
+# NO es "produce petróleo" sino la EXPOSICIÓN FISCAL NETA al precio del crudo:
+#   - Exportador neto: el alza del Brent infla la renta petrolera del Estado, que
+#     financia/amortigua el subsidio (subsidio = redistribución de renta).
+#   - Importador neto: el alza del Brent encarece el costo de suministro y ensancha
+#     la brecha que el Estado subsidia (subsidio = gasto que el choque agrava).
+# Por eso Argentina (importador neto de energía en 2015-23, Vaca Muerta aún no
+# compensaba) y Brasil (exporta crudo pero importa los DERIVADOS refinados que se
+# subsidian al consumidor) entran como importadores: el choque les sube la factura,
+# no la renta. Exportadores netos con superávit claro y sostenido de hidrocarburos:
+# crudo (VEN, ECU, COL, MEX, TTO), gas (BOL) y el entrante GUY (Stabroek desde 2019).
 EXPORTADORES = {"VEN", "ECU", "COL", "MEX", "TTO", "BOL", "GUY"}
 df["exportador_neto"] = df["iso"].isin(EXPORTADORES)
 

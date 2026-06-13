@@ -68,6 +68,22 @@ LAC_ISO <- c("ATG","ARG","ABW","BHS","BRB","BLZ","BOL","BRA","CHL","COL","CRI",
              "DMA","DOM","ECU","SLV","GRD","GTM","GUY","HTI","HND","JAM","MEX",
              "NIC","PAN","PRY","PER","PRI","KNA","LCA","VCT","SUR","TTO","URY","VEN")
 
+# Nombres de país en español (ISO3 -> etiqueta), para tablas y figuras.
+# El panel trae los nombres del IMF en inglés; se traducen al reportar.
+PAIS_ES <- c(
+  ATG="Antigua y Barbuda", ARG="Argentina", ABW="Aruba", BHS="Bahamas",
+  BRB="Barbados", BLZ="Belice", BOL="Bolivia", BRA="Brasil", CHL="Chile",
+  COL="Colombia", CRI="Costa Rica", DMA="Dominica", DOM="República Dominicana",
+  ECU="Ecuador", SLV="El Salvador", GRD="Granada", GTM="Guatemala", GUY="Guyana",
+  HTI="Haití", HND="Honduras", JAM="Jamaica", MEX="México", NIC="Nicaragua",
+  PAN="Panamá", PRY="Paraguay", PER="Perú", PRI="Puerto Rico",
+  KNA="San Cristóbal y Nieves", LCA="Santa Lucía",
+  VCT="San Vicente y las Granadinas", SUR="Surinam",
+  TTO="Trinidad y Tobago", URY="Uruguay", VEN="Venezuela"
+)
+#' Traducir códigos ISO3 a nombre de país en español
+pais_es <- function(iso) unname(PAIS_ES[iso])
+
 # Combustibles (código IMF -> etiqueta)
 FUELS <- tribble(
   ~code,  ~label,
@@ -187,11 +203,61 @@ caption_wb <- function(notas = NULL, fuente = NULL) {
   paste(partes, collapse = "\n")
 }
 
-#' Guardar figura en outputs/figures (PDF cairo, sin título)
+#' Guardar figura en outputs/figures (PDF cairo, sin título). Si pdfcrop está
+#' disponible en el sistema, recorta los márgenes sobrantes del PDF.
 save_fig <- function(plot, name, w = FIG_W, h = FIG_H) {
-  ggsave(file.path(PATH$fig, name), plot, width = w, height = h,
-         device = grDevices::cairo_pdf)
-  message("Figura guardada: ", file.path(PATH$fig, name))
+  path <- file.path(PATH$fig, name)
+  ggsave(path, plot, width = w, height = h, device = grDevices::cairo_pdf)
+  if (nchar(Sys.which("pdfcrop")) > 0) {
+    system2("pdfcrop", args = c(shQuote(path), shQuote(path)),
+            stdout = FALSE, stderr = FALSE)
+  }
+  message("Figura guardada: ", path)
+}
+
+#' Guardar figura como PNG 300 dpi con la nota al pie compuesta DENTRO de la
+#' imagen (estilo PACES). El ggplot se renderiza a un PNG temporal y magick le
+#' pega abajo un bloque blanco con la nota (envuelta al ancho). Conserva color.
+#'   plot:   ggplot/patchwork (sin caption; la nota va aparte).
+#'   name:   archivo de salida (.png) en outputs/figures.
+#'   nota:   texto al pie, de corrido. Se le antepone "Notas. " y la fuente.
+#'   fuente: texto tras "Fuente: " (se agrega al final de la nota).
+#'   w, h:   tamaño del panel de la figura en pulgadas (sin contar la nota).
+save_fig_png <- function(plot, name, nota, fuente = NULL,
+                         w = 9, h = 7, dpi = 300) {
+  stopifnot(requireNamespace("magick", quietly = TRUE))
+  path <- file.path(PATH$fig, name)
+  tmp  <- tempfile(fileext = ".png")
+  ggsave(tmp, plot, width = w, height = h, dpi = dpi,
+         device = grDevices::png, type = "cairo")
+
+  img  <- magick::image_read(tmp)
+  w_px <- magick::image_info(img)$width
+
+  # Nota al pie de corrido. La fuente se fija a un tamano PROPORCIONAL al chart
+  # (~8pt = dpi*0.11 px), no se infla para llenar el ancho: forzar el texto de
+  # borde a borde lo agranda mas que los ejes de la figura. El texto se envuelve
+  # en las lineas que necesite dentro del ancho disponible (Times ~0.404 px de
+  # ancho por unidad de fuente, medido empiricamente).
+  texto     <- paste0("Notas. ", nota,
+                      if (!is.null(fuente)) paste0(" Fuente: ", fuente))
+  margen    <- as.integer(round(dpi * 0.12))
+  ancho_txt <- w_px - 2 * margen
+  fs        <- as.integer(round(dpi * 0.11))      # ~33px = 8pt a 300dpi
+  por_linea <- floor(ancho_txt / (fs * 0.404))    # cols que caben a esa fuente
+  envuelto  <- paste(strwrap(texto, width = por_linea), collapse = "\n")
+  n_lineas  <- length(strsplit(envuelto, "\n")[[1L]])
+  h_nota    <- n_lineas * round(fs * 1.45) + margen
+
+  lienzo <- magick::image_blank(w_px, h_nota, color = "white")
+  lienzo <- magick::image_annotate(lienzo, envuelto, font = "Times",
+             size = fs, color = WB_TEXT,
+             location = paste0("+", margen, "+", round(margen / 2)),
+             gravity = "northwest")
+  final  <- magick::image_append(c(img, lienzo), stack = TRUE)
+  magick::image_write(final, path, format = "png", density = dpi)
+  message("Figura guardada: ", path, " (PNG ", dpi, " dpi)")
+  invisible(path)
 }
 
 # =============================================================
@@ -235,6 +301,7 @@ tabla_aer <- function(df, name, titulo, subheader = NULL, notas = NULL,
                       paneles = NULL, ancho_datos = 14, landscape = FALSE,
                       sheet_name = "Tabla") {
   TNR <- "Times New Roman"
+
   wb <- createWorkbook()
   addWorksheet(wb, sheet_name, gridLines = FALSE,
                orientation = if (landscape) "landscape" else "portrait")
@@ -256,7 +323,7 @@ tabla_aer <- function(df, name, titulo, subheader = NULL, notas = NULL,
   writeData(wb, sheet_name, as.data.frame(t(names(df))), startCol = off_col,
             startRow = hdr_row, colNames = FALSE)
   addStyle(wb, sheet_name, createStyle(fontName = TNR, fontSize = 11,
-           textDecoration = "Bold", halign = "center",
+           textDecoration = "Bold", halign = "center", numFmt = "@",
            border = "TopBottom", borderColour = "#888888"),
            rows = hdr_row, cols = cols, gridExpand = TRUE)
 
@@ -289,26 +356,55 @@ tabla_aer <- function(df, name, titulo, subheader = NULL, notas = NULL,
              cols = (off_col + 1L):(off_col + ncol_df - 1L), gridExpand = TRUE)
   }
 
-  # Línea de cierre bajo la última fila de datos
-  addStyle(wb, sheet_name, createStyle(border = "Bottom", borderColour = "#888888"),
+  # Filas de N (etiqueta empieza con "N "): se escriben como número entero real
+  # (numFmt "0") para que no salga el triángulo verde de "texto como número".
+  # La fila N queda encajonada: borde superior (la separa de los datos) y el
+  # borde inferior lo aporta el cierre del panel (más abajo).
+  idx_n <- which(grepl("^\\s*N\\b", as.character(df[[1]])))
+  for (k in idx_n) {
+    r <- dat_row0 + k - 1L
+    # Borde superior de la fila N, a todo el ancho (incluye la etiqueta)
+    addStyle(wb, sheet_name, createStyle(border = "Top", borderColour = "#888888"),
+             rows = r, cols = cols, gridExpand = TRUE, stack = TRUE)
+    vals <- suppressWarnings(as.numeric(df[k, -1]))
+    if (any(!is.na(vals))) {
+      for (j in which(!is.na(vals)))
+        writeData(wb, sheet_name, vals[j], startCol = off_col + j, startRow = r)
+      addStyle(wb, sheet_name, createStyle(fontName = TNR, fontSize = 10,
+               halign = "center", numFmt = "0", border = "Top",
+               borderColour = "#888888"), rows = r,
+               cols = (off_col + 1L):(off_col + ncol_df - 1L),
+               gridExpand = TRUE, stack = TRUE)
+    }
+  }
+
+  # Línea de cierre bajo la última fila de datos (medium, igual que el cierre de
+  # cada panel, para que los tres cierren con el mismo grosor)
+  addStyle(wb, sheet_name, createStyle(border = "Bottom", borderColour = "#888888",
+           borderStyle = "medium"),
            rows = dat_row0 + n - 1L, cols = cols, gridExpand = TRUE, stack = TRUE)
 
   # Etiquetas de panel: se detectan por la 1a columna que empieza con "Panel ".
-  # (también admite el parámetro `paneles` por compatibilidad.) Cada panel lleva
-  # negrita y una línea superior fina que lo separa (salvo el primero).
+  # (también admite el parámetro `paneles` por compatibilidad.) Cada panel queda
+  # encajonado: una línea medium ARRIBA de su etiqueta y otra ABAJO, al cierre.
   idx_panel <- which(grepl("^Panel ", trimws(as.character(df[[1]]))))
   if (!is.null(paneles)) idx_panel <- as.integer(paneles)
   for (k in idx_panel) {
-    r       <- dat_row0 + k - 1L
-    con_top <- k > 1L                            # sin línea en la 1a fila de datos
+    r <- dat_row0 + k - 1L
+    # Etiqueta del panel en negrita, con línea superior medium a todo el ancho
     addStyle(wb, sheet_name, createStyle(fontName = TNR, fontSize = 10,
-             textDecoration = "Bold",
-             border = if (con_top) "Top" else NULL, borderColour = "#888888"),
-             rows = r, cols = off_col, stack = TRUE)
-    if (con_top)
-      addStyle(wb, sheet_name, createStyle(border = "Top", borderColour = "#888888"),
-               rows = r, cols = (off_col + 1L):(off_col + ncol_df - 1L),
-               gridExpand = TRUE, stack = TRUE)
+             textDecoration = "Bold", border = "Top", borderColour = "#888888",
+             borderStyle = "medium"), rows = r, cols = off_col, stack = TRUE)
+    addStyle(wb, sheet_name, createStyle(border = "Top", borderColour = "#888888",
+             borderStyle = "medium"),
+             rows = r, cols = (off_col + 1L):(off_col + ncol_df - 1L),
+             gridExpand = TRUE, stack = TRUE)
+    # Línea inferior medium al cierre del panel anterior: la fila justo encima
+    # de la apertura de este panel (es la fila N del panel previo).
+    if (k > 1L)
+      addStyle(wb, sheet_name, createStyle(border = "Bottom",
+               borderColour = "#888888", borderStyle = "medium"),
+               rows = r - 1L, cols = cols, gridExpand = TRUE, stack = TRUE)
   }
 
   # Notas al pie: 9pt, todo de corrido en una sola celda (mergeada sobre el ancho

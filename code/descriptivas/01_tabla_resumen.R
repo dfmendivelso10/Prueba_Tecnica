@@ -43,14 +43,23 @@ fila_lbl <- function(txt) {
               setNames(as.list(rep("", length(anios))), as.character(anios))))
 }
 
-# Bloque de cuatro filas (explícito y total, en USD bn y %PIB) para un grupo
+# Fila de N (países del grupo), mismo valor en cada columna de año
+fila_n <- function(d) {
+  n <- n_distinct(d$iso)
+  as_tibble(c(list(Variable = "  N (países)"),
+              setNames(as.list(rep(as.character(n), length(anios))),
+                       as.character(anios))))
+}
+
+# Bloque de un grupo: etiqueta + explícito/total (USD bn y %PIB) + N de países
 bloque <- function(etiqueta, d) {
   bind_rows(
     fila_lbl(etiqueta),
     fila("Explícito (USD bn)", serie_suma(d, "expl_total")),
     fila("Total (USD bn)",     serie_suma(d, "tot_total")),
     fila("Explícito (% PIB)",  serie_pctpib(d, "expl_total"), dec = 2),
-    fila("Total (% PIB)",      serie_pctpib(d, "tot_total"),  dec = 2)
+    fila("Total (% PIB)",      serie_pctpib(d, "tot_total"),  dec = 2),
+    fila_n(d)
   )
 }
 
@@ -60,6 +69,11 @@ tabla <- bind_rows(
   bloque("Panel C. Importadores netos", filter(df, !exportador_neto))
 )
 
+# N de países por panel (para las notas)
+n_tot <- n_distinct(df$iso)
+n_exp <- n_distinct(df$iso[df$exportador_neto])
+n_imp <- n_distinct(df$iso[!df$exportador_neto])
+
 tabla_aer(
   tabla,
   name        = "tab1_descriptiva.xlsx",
@@ -67,12 +81,25 @@ tabla_aer(
   ancho_datos = 8,
   landscape   = TRUE,
   notas = c(
-    paste("Subsidios a combustibles fósiles en América Latina y el Caribe (34 países),",
+    paste("Subsidios a combustibles fósiles en América Latina y el Caribe,",
           "por año y grupo de exposición, alrededor del choque petrolero de 2022."),
     paste("Cada celda es la suma del grupo en el año: en USD miles de millones (USD bn) y",
-          "como porcentaje del PIB agregado del grupo. Exportadores netos: Bolivia, Colombia,",
-          "Ecuador, Guyana, México, Trinidad y Tobago y Venezuela; el resto son importadores",
-          "netos."),
+          "como porcentaje del PIB agregado del grupo."),
+    paste("El subsidio explícito mide la brecha entre el precio al consumidor y el costo de",
+          "suministro; el total suma además el componente implícito (externalidades no",
+          "internalizadas e IVA no aplicado). El explícito es el que reacciona al choque."),
+    paste("La clasificación es por exposición fiscal neta al precio del petróleo, no",
+          "por producción: en los exportadores netos el alza del Brent infla la renta",
+          "petrolera que financia el subsidio, mientras que en los importadores netos",
+          "encarece el costo de suministro y agrava el gasto en subsidios. Argentina",
+          "(importador neto de energía en el período) y Brasil (importa los derivados",
+          "refinados que se subsidian) se clasifican como importadores."),
+    paste0("Panel A, Total LATAM (N = ", n_tot, " países). ",
+           "Panel B, exportadores netos de hidrocarburos (N = ", n_exp, "): ",
+           "Bolivia, Colombia, Ecuador, Guyana, México, Trinidad y Tobago y Venezuela. ",
+           "Panel C, importadores netos (N = ", n_imp, "): ",
+           paste(sort(pais_es(unique(df$iso[!df$exportador_neto]))),
+                 collapse = ", "), "."),
     "Fuente: IMF Fossil Fuel Subsidies Database."
   )
 )
