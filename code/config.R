@@ -225,12 +225,14 @@ guardar_tabla <- function(df, name, sheet_name = "Datos") {
 #' Tabla con formato AER (ver .claude/rules/table-standards.md)
 #'   df:     data.frame; la 1a columna es el nombre de variable (texto, izquierda).
 #'   titulo: título de la tabla (13pt bold).
+#'   subheader: opcional, vector de etiquetas de columna (ej. c("","(1)","(2)"))
+#'              que va bajo el encabezado; 10pt centrado.
 #'   notas:  vector de notas al pie; la 1a va en cursiva (descripción), resto normal.
 #'   paneles: opcional, vector con la fila de inicio de cada panel y su etiqueta
 #'            como c("Panel A. ..." = 1, "Panel B. ..." = 5) (fila relativa a los datos).
 #' Layout: columna A vacía (margen), líneas horizontales, sin verticales ni sombreado.
-tabla_aer <- function(df, name, titulo, notas = NULL, paneles = NULL,
-                      sheet_name = "Tabla") {
+tabla_aer <- function(df, name, titulo, subheader = NULL, notas = NULL,
+                      paneles = NULL, sheet_name = "Tabla") {
   TNR <- "Times New Roman"
   wb <- createWorkbook()
   addWorksheet(wb, sheet_name, gridLines = FALSE)
@@ -245,16 +247,34 @@ tabla_aer <- function(df, name, titulo, notas = NULL, paneles = NULL,
   addStyle(wb, sheet_name, createStyle(fontName = TNR, fontSize = 13,
            textDecoration = "Bold"), rows = off_row, cols = off_col)
 
-  # Encabezado (fila 2): 11pt bold centrado, borde superior e inferior #888888
+  # Encabezado (fila 2): 11pt bold centrado, borde superior e inferior #888888.
+  # Se escribe solo la fila de nombres (los datos van aparte para no chocar con
+  # el subheader opcional).
   hdr_row <- off_row + 1L
-  writeData(wb, sheet_name, df, startCol = off_col, startRow = hdr_row,
-            headerStyle = createStyle(fontName = TNR, fontSize = 11,
-              textDecoration = "Bold", halign = "center",
-              border = "TopBottom", borderColour = "#888888"))
+  writeData(wb, sheet_name, as.data.frame(t(names(df))), startCol = off_col,
+            startRow = hdr_row, colNames = FALSE)
+  addStyle(wb, sheet_name, createStyle(fontName = TNR, fontSize = 11,
+           textDecoration = "Bold", halign = "center",
+           border = "TopBottom", borderColour = "#888888"),
+           rows = hdr_row, cols = cols, gridExpand = TRUE)
+
+  # Subheader opcional con números de columna (1), (2): 10pt centrado
+  sub_row <- hdr_row
+  if (!is.null(subheader)) {
+    sub_row <- hdr_row + 1L
+    for (j in seq_along(subheader)) {
+      writeData(wb, sheet_name, subheader[j], startCol = off_col + j - 1L,
+                startRow = sub_row)
+    }
+    addStyle(wb, sheet_name, createStyle(fontName = TNR, fontSize = 10,
+             halign = "center"), rows = sub_row, cols = cols, gridExpand = TRUE)
+  }
 
   # Cuerpo: nombres de variable (col 1) 10pt bold izquierda; datos 10pt centrado.
-  dat_row0 <- hdr_row + 1L
+  dat_row0 <- sub_row + 1L
   n        <- nrow(df)
+  writeData(wb, sheet_name, df, startCol = off_col, startRow = dat_row0,
+            colNames = FALSE)
   addStyle(wb, sheet_name, createStyle(fontName = TNR, fontSize = 10,
            textDecoration = "Bold", halign = "left"),
            rows = dat_row0:(dat_row0 + n - 1L), cols = off_col, gridExpand = TRUE)
@@ -279,15 +299,19 @@ tabla_aer <- function(df, name, titulo, notas = NULL, paneles = NULL,
     }
   }
 
-  # Notas al pie: 9pt, primera en cursiva (descripción), resto normal
+  # Notas al pie: 9pt, todo de corrido en una sola celda (mergeada sobre el ancho
+  # de la tabla) con ajuste de texto. Las partes del vector se unen con espacio.
   if (!is.null(notas)) {
     nr <- dat_row0 + n
-    for (i in seq_along(notas)) {
-      writeData(wb, sheet_name, notas[i], startCol = off_col, startRow = nr + i - 1L)
-      addStyle(wb, sheet_name, createStyle(fontName = TNR, fontSize = 9,
-               textDecoration = if (i == 1) "Italic" else NULL),
-               rows = nr + i - 1L, cols = off_col)
-    }
+    texto <- paste0("Notas. ", paste(notas, collapse = " "))
+    writeData(wb, sheet_name, texto, startCol = off_col, startRow = nr)
+    mergeCells(wb, sheet_name, cols = cols, rows = nr)
+    addStyle(wb, sheet_name, createStyle(fontName = TNR, fontSize = 9,
+             valign = "top", wrapText = TRUE), rows = nr, cols = off_col)
+    # Alto estimado de la fila según largo del texto y ancho disponible
+    ancho_chars <- 22 + 14 * max(ncol_df - 1L, 0)
+    setRowHeights(wb, sheet_name, rows = nr,
+                  heights = 14 * ceiling(nchar(texto) / ancho_chars) + 4)
   }
 
   # Anchos (col A margen=2; nombre de variable=22; datos=14) y alturas

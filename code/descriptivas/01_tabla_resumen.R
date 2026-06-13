@@ -1,65 +1,104 @@
-# Tabla 1 - Composición y cobertura del panel
+# Tabla 1 - Estadística descriptiva de subsidios y contexto fiscal
 # Autor: Daniel Mendivelso
 # Fecha: 2026-06-13
 #
 # Descripcion:
-#   Tabla descriptiva de entrada: Panel A con la estructura del panel
-#   (países, años, observaciones, exportadores/importadores) y Panel B con
-#   la cobertura (observaciones no faltantes) de cada variable por fuente.
+#   Tabla descriptiva del panel país-año. Filas = variables (Media (DE)),
+#   columnas = subgrupos en dos ejes: exposición (exportador/importador) y
+#   tiempo (pre-choque 2015-2021, choque 2022, post 2023). Tres paneles:
+#     Panel A: subsidios en USD miles de millones
+#     Panel B: subsidios como % del PIB
+#     Panel C: choque y contexto fiscal
 #
 # Input:  data/processed/panel_pais_anio.xlsx
-# Output: outputs/tables/tab1_resumen_panel.xlsx
+# Output: outputs/tables/tab1_descriptiva.xlsx
 
 source(here::here("code/config.R"))
 
 df <- cargar_panel_anio()
-N <- nrow(df)
 
-# Panel A: estructura del panel
-panel_a <- tribble(
-  ~Concepto,                      ~Valor,                                       ~Fuente,
-  "Países (LATAM y Caribe)",      as.character(n_distinct(df$iso)),             "IMF FFS",
-  "Período",                      paste0(min(df$anio), "-", max(df$anio)),      "IMF FFS",
-  "Observaciones (país-año)",     as.character(N),                              "",
-  "Exportadores netos de petróleo", as.character(n_distinct(df$iso[df$exportador_neto])), "Clasificación propia",
-  "Importadores netos",           as.character(n_distinct(df$iso[!df$exportador_neto])),  "Clasificación propia"
+# Subgrupos por columna
+SUB <- list(
+  exp = df[df$exportador_neto, ],
+  imp = df[!df$exportador_neto, ],
+  pre = df[df$anio <= 2021, ],
+  y22 = df[df$anio == 2022, ],
+  y23 = df[df$anio == 2023, ]
 )
 
-# Panel B: cobertura por variable (obs no faltantes y % sobre N)
-cobertura <- tribble(
-  ~Concepto,                ~var,             ~Fuente,
-  "Subsidio explícito",     "expl_total",     "IMF FFS",
-  "Subsidio implícito",     "impl_total",     "IMF FFS",
-  "Subsidio total",         "tot_total",      "IMF FFS",
-  "Subsidio explícito (% PIB)", "expl_pctgdp","IMF FFS",
-  "Precio Brent",           "brent_usd",      "EIA",
-  "Brecha de precio (gasolina)", "brecha_gso","IMF FFS",
-  "Balance fiscal (% PIB)", "balance_fiscal", "World Bank",
-  "Ingreso público (% PIB)","ingreso_publico","World Bank"
-) |>
-  mutate(
-    obs   = map_int(var, ~ sum(!is.na(df[[.x]]))),
-    Valor = paste0(obs, "/", N, " (", round(100 * obs / N), "%)")
-  ) |>
-  select(Concepto, Valor, Fuente)
+# Media (DE); esc = factor de escala (100 para pasar fracción de PIB a %)
+md <- function(x, esc = 1) {
+  x <- x[!is.na(x)] * esc
+  if (!length(x)) return("-")
+  paste0(fmt_num(mean(x), 2), " (", fmt_num(sd(x), 2), ")")
+}
 
-# Filas de etiqueta de panel como filas propias (celdas vacías salvo el Concepto),
-# para que no pisen datos; tabla_aer las pone en negrita.
-fila_lbl <- function(txt) tibble(Concepto = txt, Valor = "", Fuente = "")
-cuerpo <- bind_rows(
-  fila_lbl("Panel A. Estructura"), panel_a,
-  fila_lbl("Panel B. Cobertura por variable (observaciones disponibles)"), cobertura
+# Una fila: variable en Total + los cinco subgrupos
+fila <- function(label, var, esc = 1) {
+  tibble(
+    Variable = paste0("  ", label),
+    Total    = md(df[[var]], esc),
+    Export   = md(SUB$exp[[var]], esc),
+    Import   = md(SUB$imp[[var]], esc),
+    Pre      = md(SUB$pre[[var]], esc),
+    Y2022    = md(SUB$y22[[var]], esc),
+    Y2023    = md(SUB$y23[[var]], esc)
+  )
+}
+
+# Fila de etiqueta de panel (resto vacío)
+panel <- function(label) {
+  tibble(Variable = label, Total = "", Export = "", Import = "",
+         Pre = "", Y2022 = "", Y2023 = "")
+}
+
+# Fila N (tamaños de muestra por subgrupo)
+fila_n <- function() {
+  tibble(Variable = "N (país-año)", Total = as.character(nrow(df)),
+         Export = as.character(nrow(SUB$exp)), Import = as.character(nrow(SUB$imp)),
+         Pre = as.character(nrow(SUB$pre)), Y2022 = as.character(nrow(SUB$y22)),
+         Y2023 = as.character(nrow(SUB$y23)))
+}
+
+tabla <- bind_rows(
+  panel("Panel A. Subsidios (USD miles de millones)"),
+  fila("Explícito",  "expl_total"),
+  fila("Implícito",  "impl_total"),
+  fila("Total",      "tot_total"),
+
+  panel("Panel B. Subsidios (% del PIB)"),
+  fila("Explícito",  "expl_pctgdp", esc = 100),
+  fila("Implícito",  "impl_pctgdp", esc = 100),
+  fila("Total",      "tot_pctgdp",  esc = 100),
+
+  panel("Panel C. Canal de precios y contexto fiscal"),
+  fila("Brecha de precio gasolina",  "brecha_gso"),
+  fila("Brecha de precio diésel",    "brecha_die"),
+  fila("Balance fiscal (% PIB) (a)", "balance_fiscal"),
+  fila("Ingreso público (% PIB) (a)","ingreso_publico"),
+
+  fila_n()
 )
-filas_panel <- c(1L, nrow(panel_a) + 2L)  # filas de las dos etiquetas dentro del cuerpo
+
+# Encabezados legibles para las columnas
+names(tabla) <- c("Variable", "Total", "Exportadores", "Importadores",
+                  "2015-2021", "2022", "2023")
 
 tabla_aer(
-  cuerpo,
-  name    = "tab1_resumen_panel.xlsx",
-  titulo  = "Tabla 1. Composición y cobertura del panel",
-  paneles = setNames(filas_panel, cuerpo$Concepto[filas_panel]),
+  tabla,
+  name      = "tab1_descriptiva.xlsx",
+  titulo    = "Tabla 1. Estadística descriptiva de subsidios y contexto fiscal",
+  subheader = c("", "(1)", "(2)", "(3)", "(4)", "(5)", "(6)"),
   notas = c(
-    "Panel país-año de subsidios a combustibles fósiles en América Latina y el Caribe.",
-    "La deuda pública (World Bank) se excluye por baja cobertura (64/306).",
-    "Fuentes: IMF Fossil Fuel Subsidies Database; EIA (Brent); World Bank (WDI)."
+    paste("Estadística descriptiva del panel país-año de América Latina y el Caribe,",
+          "2015-2023."),
+    "Cada celda reporta la media entre países con la desviación estándar entre paréntesis.",
+    paste("Las columnas desagregan la muestra completa (1) por condición de exportador neto",
+          "de hidrocarburos (2)-(3) y por período relativo al choque petrolero de 2022 (4)-(6);",
+          "exportadores netos: Bolivia, Colombia, Ecuador, Guyana, México, Trinidad y Tobago y",
+          "Venezuela."),
+    paste("(a) Cobertura parcial: la fuente no reporta el dato para todos los país-año.",
+          "Las brechas de precio son el precio al consumidor menos el costo de suministro."),
+    "Fuentes: IMF Fossil Fuel Subsidies Database y World Bank (WDI)."
   )
 )

@@ -67,7 +67,8 @@ prohibitivamente lento; el análisis es 100% R. Todos los outputs se regeneran d
 Las figuras siguen la paleta del **World Bank Data Visualization Style Guide**
 (https://wbg-vis-design.vercel.app/, paquetes `wbpyplot` / `wbplot`), con tipografía
 Times New Roman. Las tablas siguen un estándar tipo AER (Times New Roman, solo líneas
-horizontales, notas al pie). Ambos se definen de forma centralizada en `code/config.R`.
+horizontales, notas al pie de corrido). Ambos se definen de forma centralizada en
+`code/config.R` y se documentan en `docs/convenciones.md`.
 
 ## Entregables
 
