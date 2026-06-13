@@ -9,9 +9,9 @@
 #     Panel A: Total LATAM
 #     Panel B: Exportadores netos de hidrocarburos
 #     Panel C: Importadores netos
-#   Cada panel reporta el subsidio explícito y total (suma regional USD bn
-#   y % del PIB del grupo). Muestra a la vez la trayectoria del choque y la
-#   heterogeneidad entre exportadores e importadores.
+#   Cada panel reporta el subsidio explícito, implícito y total (suma regional
+#   USD bn y % del PIB del grupo). Muestra a la vez la trayectoria del choque y
+#   la heterogeneidad entre exportadores e importadores.
 #
 # Input:  data/processed/panel_pais_anio.xlsx
 # Output: outputs/tables/tab1_descriptiva.xlsx
@@ -51,13 +51,16 @@ fila_n <- function(d) {
                        as.character(anios))))
 }
 
-# Bloque de un grupo: etiqueta + explícito/total (USD bn y %PIB) + N de países
+# Bloque de un grupo: etiqueta + explícito/implícito/total (USD bn y %PIB) +
+# N de países. Orden por sección: los dos componentes y luego su suma.
 bloque <- function(etiqueta, d) {
   bind_rows(
     fila_lbl(etiqueta),
     fila("Explícito (USD bn)", serie_suma(d, "expl_total")),
+    fila("Implícito (USD bn)", serie_suma(d, "impl_total")),
     fila("Total (USD bn)",     serie_suma(d, "tot_total")),
     fila("Explícito (% PIB)",  serie_pctpib(d, "expl_total"), dec = 2),
+    fila("Implícito (% PIB)",  serie_pctpib(d, "impl_total"), dec = 2),
     fila("Total (% PIB)",      serie_pctpib(d, "tot_total"),  dec = 2),
     fila_n(d)
   )
@@ -86,8 +89,11 @@ tabla_aer(
     paste("Cada celda es la suma del grupo en el año: en USD miles de millones (USD bn) y",
           "como porcentaje del PIB agregado del grupo."),
     paste("El subsidio explícito mide la brecha entre el precio al consumidor y el costo de",
-          "suministro; el total suma además el componente implícito (externalidades no",
-          "internalizadas e IVA no aplicado). El explícito es el que reacciona al choque."),
+          "suministro; el implícito recoge las externalidades no internalizadas y el IVA no",
+          "aplicado; el total es la suma de ambos. El explícito es el componente que reacciona",
+          "al choque en el corto plazo; el implícito depende del volumen consumido y de",
+          "parámetros de daño ambiental, no del precio internacional. El implícito (y, por",
+          "tanto, el total) no está estimado para todos los país-año."),
     paste("La clasificación es por exposición fiscal neta al precio del petróleo, no",
           "por producción: en los exportadores netos el alza del Brent infla la renta",
           "petrolera que financia el subsidio, mientras que en los importadores netos",
