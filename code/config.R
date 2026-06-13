@@ -328,7 +328,9 @@ tabla_aer <- function(df, name, titulo, subheader = NULL, notas = NULL,
 
 #' Anteponer cero a fracciones decimales y fijar decimales (0.357, no .357)
 fmt_num <- function(x, dec = 2) {
-  ifelse(is.na(x), "", formatC(round(x, dec), format = "f", digits = dec))
+  x <- round(x, dec)
+  x[x == 0] <- 0                       # evita el "-0.00" por redondeo
+  ifelse(is.na(x), "", formatC(x, format = "f", digits = dec))
 }
 
 #' Iniciar log de script (sink a logs/)
