@@ -6,7 +6,7 @@
 # Descripción:
 #   Centraliza librerías, rutas, catálogos (países LATAM, combustibles,
 #   variables IMF), helpers (logging, guardar tablas/figuras) y temas
-#   de figuras estilo AER.
+#   de figuras (paleta World Bank, tablas estilo AER).
 #
 # Uso: source(here::here("code/config.R")) al inicio de cada script.
 # Input/Output: ninguno (solo define objetos en el environment).
@@ -46,7 +46,7 @@ for (p in PATH) dir.create(p, showWarnings = FALSE, recursive = TRUE)
 # Archivos principales
 FILE_PANEL_ANIO <- file.path(PATH$processed, "panel_pais_anio.xlsx")
 FILE_PANEL_FUEL <- file.path(PATH$processed, "panel_pais_anio_combustible.xlsx")
-# Ambos paneles los produce code/00c_procesar.py (extracción + limpieza).
+# Ambos paneles los produce code/limpieza/00c_procesar.py (extracción + limpieza).
 
 # =============================================================
 # 3. Ventana temporal y escenario
@@ -57,7 +57,7 @@ YEAR_SHOCK <- 2022
 YEARS_PRE  <- 2015:2019   # pre-choque "normal" (excluye 2020-21 COVID/recuperación)
 
 # Escenario baseline (sin reforma). El mapeo de columnas crudas de la
-# hoja `data` vive en code/00c_procesar.py (extracción + limpieza en Python).
+# hoja `data` vive en code/limpieza/00c_procesar.py (extracción + limpieza en Python).
 SCENARIO_BASELINE <- "U1"
 
 # =============================================================

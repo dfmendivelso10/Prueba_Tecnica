@@ -15,7 +15,7 @@
 import os
 import pandas as pd
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 PROC = os.path.join(ROOT, "data", "processed")
 OUT = os.path.join(ROOT, "quality_reports", "validacion.md")
 

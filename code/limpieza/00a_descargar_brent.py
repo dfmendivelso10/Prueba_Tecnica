@@ -15,7 +15,7 @@ import requests
 import pandas as pd
 from io import StringIO
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 OUT = os.path.join(ROOT, "data", "raw", "brent_anual.csv")
 URL = "https://datahub.io/core/oil-prices/r/brent-year.csv"
 

@@ -25,7 +25,7 @@ entran al panel principal (se documenta el motivo en cada caso).
   - balance fiscal — GC.NLD.TOTL.GD.ZS
   - deuda pública (gobierno central) — GC.DOD.TOTL.GD.ZS
   - ingreso público — GC.REV.XGRT.GD.ZS
-- **Descarga:** reproducible con `python3 code/00b_descargar_fiscal.py`
+- **Descarga:** reproducible con `python3 code/limpieza/00b_descargar_fiscal.py`
 - **Período / cobertura:** 2015-2023, 34 países de LATAM.
 - **Uso:** contextualizar el costo fiscal de los subsidios frente al déficit, la
   deuda y los ingresos públicos. El IMF solo trae ingresos fiscales energéticos.
@@ -34,7 +34,7 @@ entran al panel principal (se documenta el motivo en cada caso).
 - **Fuente:** Banco Central de Reserva del Perú (BCRP), serie EMBIG (Diferencial de
   Rendimientos del Índice de Bonos de Mercados Emergentes), spread soberano en
   puntos base. Valores mensuales promediados a anuales.
-- **Descarga:** reproducible con `python3 code/00d_descargar_riesgo.py`
+- **Descarga:** reproducible con `python3 code/limpieza/00d_descargar_riesgo.py`
 - **Cobertura:** 8 países LATAM que emiten deuda en USD (ARG, BRA, CHL, COL, ECU,
   MEX, PER, VEN), 2015-2023. Las islas pequeñas del Caribe no tienen EMBI.
 - **Uso:** proxy del costo de financiamiento soberano. **No se integra al panel:**
@@ -45,7 +45,7 @@ entran al panel principal (se documenta el motivo en cada caso).
 - **Fuente:** World Bank Open Data (API), reservas internacionales:
   - reservas totales (incl. oro), USD corrientes — FI.RES.TOTL.CD
   - reservas en meses de importaciones — FI.RES.TOTL.MO
-- **Descarga:** reproducible con `python3 code/00e_descargar_reservas.py`
+- **Descarga:** reproducible con `python3 code/limpieza/00e_descargar_reservas.py`
 - **Período / cobertura:** 2015-2023, 34 países de LATAM (291/284 observaciones).
 - **Uso:** dimensión de balanza de pagos (holgura externa). **No se integra al panel.**
   Se conserva como referencia por si se retoma el ángulo externo.

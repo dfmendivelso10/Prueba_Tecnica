@@ -15,7 +15,7 @@ import os
 import requests
 import pandas as pd
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 OUT = os.path.join(ROOT, "data", "raw", "riesgo_pais.csv")
 
 # Código de serie BCRP -> país (ISO3)

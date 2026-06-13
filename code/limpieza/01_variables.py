@@ -14,7 +14,7 @@
 import os
 import pandas as pd
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 PROC = os.path.join(ROOT, "data", "processed")
 
 df = pd.read_excel(os.path.join(PROC, "panel_base.xlsx"))

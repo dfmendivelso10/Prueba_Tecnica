@@ -14,7 +14,7 @@
 import os
 import pandas as pd
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 XLSB = os.path.join(ROOT, "data", "raw", "imffossilfuelsubsidiesdata.xlsb")
 OUT = os.path.join(ROOT, "docs", "diccionario_variables.xlsx")
 FUENTE = "IMF - Fossil Fuel Subsidies Database"

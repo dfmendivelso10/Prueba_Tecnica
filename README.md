@@ -22,12 +22,14 @@ inclusión o exclusión, está en `data/raw/FUENTES.md`.
 ## Estructura
 
 ```
-code/        config.R + scripts numerados (descarga, procesamiento, análisis)
-data/raw/    Fuentes crudas sin modificar (IMF .xlsb, Brent, fiscal)
+code/            config.R (configuración global)
+code/limpieza/   descarga, procesamiento, validación y diccionario
+code/descriptivas/  tablas y figuras descriptivas
+data/raw/        Fuentes crudas sin modificar (IMF .xlsb, Brent, fiscal)
 data/processed/  Paneles limpios (.xlsx)
-outputs/     figures/ y tables/
-docs/        Pieza de comunicación final
-ai_logs/     Prompts y chats de IA usados
+outputs/         figures/ y tables/
+docs/            Pieza de comunicación final
+ai_logs/         Prompts y chats de IA usados
 ```
 
 ## Reproducir
@@ -40,16 +42,16 @@ pip install pyxlsb pandas openpyxl requests
 Rscript -e 'install.packages(c("here","tidyverse","readxl","writexl","openxlsx","patchwork","fixest","sandwich","lmtest"))'
 
 # 1) Descargar fuentes complementarias (precio Brent y datos fiscales)
-python3 code/00a_descargar_brent.py
-python3 code/00b_descargar_fiscal.py
+python3 code/limpieza/00a_descargar_brent.py
+python3 code/limpieza/00b_descargar_fiscal.py
 # Opcionales (descargadas pero no integradas al panel; ver data/raw/FUENTES.md)
-python3 code/00d_descargar_riesgo.py     # riesgo país EMBIG
-python3 code/00e_descargar_reservas.py   # reservas internacionales
+python3 code/limpieza/00d_descargar_riesgo.py     # riesgo país EMBIG
+python3 code/limpieza/00e_descargar_reservas.py   # reservas internacionales
 
 # 2) Procesamiento: IMF + Brent + fiscal -> paneles en data/processed/  (~9 s)
-python3 code/00c_procesar.py
-python3 code/01_variables.py
-python3 code/02_validar.py
+python3 code/limpieza/00c_procesar.py
+python3 code/limpieza/01_variables.py
+python3 code/limpieza/02_validar.py
 
 # 3) Análisis en R (lee los paneles .xlsx)
 Rscript code/03_eda.R         # estadística descriptiva y figuras
@@ -70,7 +72,7 @@ horizontales, notas al pie). Ambos se definen de forma centralizada en `code/con
 ## Entregables
 
 1. Datos — `data/`
-2. Código de procesamiento — `code/00*.py`, `code/01_variables.py`
-3. Código de análisis — `code/03_eda.R`, `code/04_model.R`
+2. Código de procesamiento — `code/limpieza/`
+3. Código de análisis — `code/descriptivas/`, `code/04_model.R`
 4. Comunicación de resultados — `docs/`
 5. Logs de IA — `ai_logs/`

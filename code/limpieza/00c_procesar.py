@@ -16,7 +16,7 @@
 import os
 import pandas as pd
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 XLSB = os.path.join(ROOT, "data", "raw", "imffossilfuelsubsidiesdata.xlsb")
 PROC = os.path.join(ROOT, "data", "processed")
 os.makedirs(PROC, exist_ok=True)
