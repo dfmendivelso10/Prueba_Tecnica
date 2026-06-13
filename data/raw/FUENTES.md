@@ -47,7 +47,5 @@ entran al panel principal (se documenta el motivo en cada caso).
   - reservas en meses de importaciones — FI.RES.TOTL.MO
 - **Descarga:** reproducible con `python3 code/00e_descargar_reservas.py`
 - **Período / cobertura:** 2015-2023, 34 países de LATAM (291/284 observaciones).
-- **Uso:** dimensión de balanza de pagos (holgura externa). **No se integra al panel:**
-  `reservas_meses` está contaminada por la factura petrolera (el Brent alto infla el
-  denominador de importaciones, no solo refleja pérdida de divisas). Se conserva por
-  si se retoma el ángulo externo.
+- **Uso:** dimensión de balanza de pagos (holgura externa). **No se integra al panel.**
+  Se conserva como referencia por si se retoma el ángulo externo.
