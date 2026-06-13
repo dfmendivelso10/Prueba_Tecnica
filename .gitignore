@@ -1,0 +1,22 @@
+# Harness / herramientas internas (no parte del entregable)
+.claude/
+MEMORY.md
+
+# macOS
+.DS_Store
+
+# Python
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+.venv/
+venv/
+
+# R
+.Rhistory
+.RData
+.Rproj.user/
+
+# Temporales
+*.tmp
+~$*
