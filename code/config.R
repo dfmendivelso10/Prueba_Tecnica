@@ -238,15 +238,16 @@ save_fig_png <- function(plot, name, nota, fuente = NULL,
   # (~8pt = dpi*0.11 px), no se infla para llenar el ancho: forzar el texto de
   # borde a borde lo agranda mas que los ejes de la figura. El texto se envuelve
   # dentro del ancho disponible. El ancho medio de caracter Times en magick es
-  # ~0.50 px por unidad de fuente; se usa 0.52 para dejar holgura y que ninguna
-  # linea se desborde por el borde derecho (antes 0.404 desbordaba en figuras
-  # angostas y altas como el dot plot).
+  # ~0.46 px por unidad de fuente: con 0.404 el texto se desbordaba por el borde
+  # derecho en figuras angostas (dot plot); con 0.52 quedaba demasiado corto,
+  # dejando aire a la derecha en figuras anchas (fig1). 0.46 llena casi hasta el
+  # borde sin desbordar en ninguno de los dos formatos.
   texto     <- paste0("Notas. ", nota,
                       if (!is.null(fuente)) paste0(" Fuente: ", fuente))
   margen    <- as.integer(round(dpi * 0.12))
   ancho_txt <- w_px - 2 * margen
   fs        <- as.integer(round(dpi * 0.11))      # ~33px = 8pt a 300dpi
-  por_linea <- floor(ancho_txt / (fs * 0.52))     # cols que caben a esa fuente
+  por_linea <- floor(ancho_txt / (fs * 0.46))     # cols que caben a esa fuente
   envuelto  <- paste(strwrap(texto, width = por_linea), collapse = "\n")
   n_lineas  <- length(strsplit(envuelto, "\n")[[1L]])
   h_nota    <- n_lineas * round(fs * 1.45) + margen
