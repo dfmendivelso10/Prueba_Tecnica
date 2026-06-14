@@ -13,7 +13,9 @@ fósiles en LATAM, y qué implica para la política fiscal y de subsidios?
 
 - **IMF Fossil Fuel Subsidies Database** (obligatoria): subsidios explícitos e implícitos.
 - **EIA**: precio internacional del petróleo Brent.
-- **World Bank (WDI)**: indicadores fiscales (balance, deuda, ingreso público).
+- **FMI, World Economic Outlook** (vía IMF DataMapper): indicadores fiscales (deuda pública
+  bruta, balance fiscal, ingreso del gobierno general). Se usa el WEO y no el Banco Mundial
+  porque cubre los 34 países sin huecos (el Banco Mundial deja 50–79 % de huecos en el Caribe).
 
 Descargadas como referencia pero no integradas al panel: riesgo país EMBIG (BCRP) y
 reservas internacionales (World Bank). El detalle de cada fuente, con URL y motivo de
@@ -22,10 +24,10 @@ inclusión o exclusión, está en `data/raw/FUENTES.md`.
 ## Estructura
 
 ```
-code/            config.R (configuración global)
+code/            config.R + modelo (06), pieza fiscal (07) y robustez (08)
 code/limpieza/   descarga, procesamiento, validación y diccionario
-code/descriptivas/  tablas y figuras descriptivas
-data/raw/        Fuentes crudas sin modificar (IMF .xlsb, Brent, fiscal)
+code/descriptivas/  tablas y figuras descriptivas (01–05)
+data/raw/        Fuentes crudas sin modificar (IMF .xlsb, Brent, fiscal WEO)
 data/processed/  Paneles limpios (.xlsx)
 outputs/         figures/ y tables/
 docs/            Pieza de comunicación final
@@ -53,9 +55,17 @@ python3 code/limpieza/00c_procesar.py
 python3 code/limpieza/01_variables.py
 python3 code/limpieza/02_validar.py
 
-# 3) Análisis en R (lee los paneles .xlsx)
-Rscript code/03_eda.R         # estadística descriptiva y figuras
-Rscript code/04_model.R       # modelo principal del efecto del choque
+# 3) Descriptivas en R (tablas y figuras; leen los paneles .xlsx)
+Rscript code/descriptivas/01_tabla_resumen.R   # Tabla 1: descriptiva por grupo
+Rscript code/descriptivas/02_tabla_paises.R    # Tabla 2: clasificación de los 34 países
+Rscript code/descriptivas/03_fig_ruptura.R     # Figura 1: ruptura 2022
+Rscript code/descriptivas/04_fig_brent.R       # Figura 2: co-movimiento Brent
+Rscript code/descriptivas/05_fig_impacto.R     # Figura 3: cambio por país
+
+# 4) Modelo y análisis en R
+Rscript code/06_modelo.R       # DiD/TWFE: efecto central + event study (Tabla 4, Figura 4)
+Rscript code/07_pieza_fiscal.R # matriz subsidio–deuda y recomendación (Tabla 5, Figura 5)
+Rscript code/08_robustez.R     # leave-one-out y exclusión de extremos (Tabla 6)
 ```
 
 El procesamiento está en Python (pyxlsb) porque leer el `.xlsb` del IMF en R es
