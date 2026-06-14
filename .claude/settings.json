@@ -1,0 +1,98 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git status *)",
+      "Bash(git diff *)",
+      "Bash(git log *)",
+      "Bash(git branch *)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git push *)",
+      "Bash(git pull *)",
+      "Bash(git fetch *)",
+      "Bash(git checkout *)",
+      "Bash(git stash *)",
+      "Bash(gh pr *)",
+      "Bash(gh run *)",
+      "Bash(python *)",
+      "Bash(python3 *)",
+      "Bash(Rscript *)",
+      "Bash(stata *)",
+      "Bash(pip install *)",
+      "Bash(pip freeze *)",
+      "Bash(chmod *)",
+      "Bash(ls *)",
+      "Bash(find *)",
+      "Bash(wc *)",
+      "Bash(mkdir *)",
+      "Bash(open *)",
+      "Bash(claude --version)",
+      "Bash(python3)",
+      "Bash(awk '{print \"CPU%:\",$3,\" tiempo:\",$10}')",
+      "Bash(curl -sL -A \"Mozilla/5.0\" \"https://fred.stlouisfed.org/graph/fredgraph.csv?id=GGXONLBPGDPCOL\" -o t1.csv --max-time 30 -w \"HTTP %{http_code} size %{size_download}\\\\n\")",
+      "Bash(head -3 t1.csv)",
+      "Bash(curl -sL \"https://api.worldbank.org/v2/country/COL/indicator/GC.NLD.TOTL.GD.ZS?format=json&date=2015:2023&per_page=50\" --max-time 30 -o wb.json -w \"HTTP %{http_code} size %{size_download}\\\\n\")",
+      "Bash(head -c 400 wb.json)",
+      "Bash(gh auth *)",
+      "Bash(git init *)",
+      "Bash(gh repo *)",
+      "WebFetch(domain:wbg-vis-design.vercel.app)",
+      "Bash(sips -s format png outputs/figures/fig1_ruptura.pdf --out /tmp/fig1d.png)",
+      "Bash(find /Users/daniel/Documents/AEPP_2026-1_Slides/Slides_Toolkit_Beamer/.claude -type f -name \"*.md\" | sort)",
+      "Read(//Users/daniel/Documents/AEPP_2026-1_Slides/Slides_Toolkit_Beamer/.claude/**)",
+      "Read(//Users/daniel/Documents/AEPP_2026-1_Slides/Prueba_Tecnica_Completa/figures/**)",
+      "Read(//Users/daniel/Documents/AEPP_2026-1_Slides/Prueba_Tecnica_Completa/tables/**)",
+      "Read(//Users/daniel/Documents/AEPP_2026-1_Slides/Prueba_Tecnica_Completa/**)",
+      "Bash(xelatex --version)",
+      "Bash(xelatex -interaction=nonstopmode Prueba_Tecnica_Resultados.tex)",
+      "Bash(echo \"Exit: $?\")",
+      "Bash(pdftotext -f 14 -l 14 Prueba_Tecnica_Resultados.pdf -)",
+      "Edit(/.claude/skills/did-event-study/**)",
+      "Bash(pdftotext -f 8 -l 8 Prueba_Tecnica_Resultados.pdf -)",
+      "Bash(pdftotext -f 28 -l 28 Prueba_Tecnica_Resultados.pdf -)",
+      "Bash(xelatex -interaction=nonstopmode -halt-on-error Prueba_Tecnica_Resultados.tex)",
+      "Bash(echo \"exit: $?\")",
+      "Bash(git -C /Users/daniel/Documents/Prueba_Tecnica status --short)",
+      "Bash(git -C /Users/daniel/Documents/Prueba_Tecnica log --oneline -3)",
+      "Bash(git -C /Users/daniel/Documents/Prueba_Tecnica add .gitignore .claude/)"
+    ]
+  },
+  "hooks": {
+    "PreCompact": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/pre-compact.py",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "matcher": "compact|resume",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/post-compact-restore.py",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/verify-reminder.py",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  },
+  "plansDirectory": "quality_reports/plans"
+}
