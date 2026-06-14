@@ -23,3 +23,6 @@ venv/
 
 # Logs de ejecución (reproducibles, no entregable)
 logs/
+
+# Notas internas de presentación (borrador, no entregable)
+docs/resultados_slides.md
