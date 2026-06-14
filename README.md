@@ -31,7 +31,6 @@ data/raw/        Fuentes crudas sin modificar (IMF .xlsb, Brent, fiscal WEO)
 data/processed/  Paneles limpios (.xlsx)
 outputs/         figures/ y tables/
 docs/            Pieza de comunicación final
-ai_logs/         Prompts y chats de IA usados
 ```
 
 ## Reproducir
@@ -86,4 +85,3 @@ horizontales, notas al pie de corrido). Ambos se definen de forma centralizada e
 2. Código de procesamiento — `code/limpieza/`
 3. Código de análisis — `code/descriptivas/`, `code/04_model.R`
 4. Comunicación de resultados — `docs/`
-5. Logs de IA — `ai_logs/`
