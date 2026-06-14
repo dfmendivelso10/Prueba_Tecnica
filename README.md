@@ -79,9 +79,28 @@ Times New Roman. Las tablas siguen un estándar tipo AER (Times New Roman, solo 
 horizontales, notas al pie de corrido). Ambos se definen de forma centralizada en
 `code/config.R` y se documentan en `docs/convenciones.md`.
 
+## Uso de inteligencia artificial
+
+Para la elaboración de esta prueba se utilizó **Claude Code (Anthropic)** como asistente
+de apoyo en tres tareas específicas: (i) validación de datos y consistencia numérica entre
+el panel procesado y los resultados reportados; (ii) producción de tablas en formato AER
+mediante scripts en R; y (iii) construcción y edición de la presentación en Beamer, con
+compilación iterativa para verificar ausencia de errores. En todos los casos, las decisiones
+metodológicas —elección del estimador, clasificación de países, variables de resultado y
+estrategia de identificación— fueron tomadas bajo criterio del autor.
+
+La carpeta `.claude/` documenta cómo se configuró la asistencia. Contiene:
+
+- `.claude/rules/` — instrucciones que definen estándares de código, econometría, tablas y
+  redacción académica que el asistente debía respetar en cada tarea.
+- `.claude/agents/` — revisores especializados (código R, econometría, proofreading) que se
+  ejecutaban sobre los scripts y slides antes de reportar un resultado como terminado.
+- `.claude/skills/` — rutinas reutilizables para tareas recurrentes (compilar LaTeX, correr
+  el análisis, hacer commits).
+
 ## Entregables
 
 1. Datos — `data/`
 2. Código de procesamiento — `code/limpieza/`
 3. Código de análisis — `code/descriptivas/`, `code/04_model.R`
-4. Comunicación de resultados — `docs/`
+4. Comunicación de resultados — `Prueba_Tecnica_Completa/`
