@@ -9,7 +9,7 @@
 #     Panel combustible: país × año × combustible (explícito/implícito/total)
 #
 # Input:  data/raw/imffossilfuelsubsidiesdata.xlsb
-#         brent_anual.csv, fiscal_wb.csv, riesgo_pais.csv (fuentes complementarias)
+#         brent_anual.csv, fiscal_weo.xlsx, riesgo_pais.csv (fuentes complementarias)
 # Output: data/processed/panel_base.xlsx
 #         data/processed/panel_pais_anio_combustible.xlsx
 
@@ -86,8 +86,10 @@ base = sub.pivot_table(index=["iso", "pais", "region", "incomelevel", "anio"],
 brent = pd.read_csv(os.path.join(ROOT, "data", "raw", "brent_anual.csv"))
 base = base.merge(brent, on="anio", how="left")
 
-# Añadir indicadores fiscales del Banco Mundial (balance, deuda, ingreso público)
-fiscal = pd.read_csv(os.path.join(ROOT, "data", "raw", "fiscal_wb.csv"))
+# Añadir indicadores fiscales del FMI/WEO (balance, deuda, ingreso público).
+# Se usa WEO en vez del Banco Mundial: cubre los 34 países sin huecos (el BM
+# dejaba 50-79% de NA), lo que permite usarlos en el análisis cuantitativo.
+fiscal = pd.read_excel(os.path.join(ROOT, "data", "raw", "fiscal_weo.xlsx"))
 base = base.merge(fiscal, on=["iso", "anio"], how="left")
 
 # Nota: el riesgo país (EMBIG, data/raw/riesgo_pais.csv) se excluye del panel:

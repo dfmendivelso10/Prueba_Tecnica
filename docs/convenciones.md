@@ -31,8 +31,9 @@ Implementadas de forma centralizada en `code/config.R` (helpers `tabla_aer()`,
 - Claves de nota con letras minúsculas (a, b, c) para entradas específicas.
 - Orden de las frases: descripción del contenido → formato de los valores (ej. media (DE))
   → definición de los grupos → restricciones de muestra → fuente (siempre al final).
-- **Sin significancia, sin estrellas, sin tests:** el reto no evalúa significancia ni
-  robustez, por lo que las tablas reportan solo estimadores puntuales.
+- **Significancia:** las tablas de regresión reportan estrellas según el p-value clustered
+  (`† p<0.10, * p<0.05, ** p<0.01, *** p<0.001`); la línea de niveles va en las notas. Las
+  tablas descriptivas siguen reportando solo estimadores puntuales (no hay test entre grupos).
 
 ## Figuras (paleta World Bank)
 

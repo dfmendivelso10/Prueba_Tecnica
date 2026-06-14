@@ -1,10 +1,10 @@
 ###############################################################
-# Choque petrolero 2022 - 04_fig_impacto.R
+# Choque petrolero 2022 - 05_fig_impacto.R
 # Autor: Daniel Mendivelso
 # Fecha: 2026-06-13
 #
 # Descripcion:
-#   Figura 2. Dot plot (Cleveland): impacto fiscal del choque por pais,
+#   Figura 3. Dot plot: impacto fiscal del choque por pais,
 #   medido como el cambio en el subsidio explicito a combustibles fosiles
 #   entre el promedio pre-choque (2015-2019, periodo "normal" previo a
 #   COVID) y el ano del choque (2022), en puntos porcentuales del PIB.
@@ -17,12 +17,12 @@
 #   (que premia bases pre-choque pequenas).
 #
 # Input:  data/processed/panel_pais_anio.xlsx  (306 obs)
-# Output: outputs/figures/fig2_impacto.png     (PNG 300 dpi)
+# Output: outputs/figures/fig3_impacto.png     (PNG 300 dpi)
 ###############################################################
 
 source(here::here("code/config.R"))
 
-log_file <- iniciar_log("04_fig_impacto")
+log_file <- iniciar_log("05_fig_impacto")
 
 # ---------------------------------------------------------------------------
 # 1. Carga y verificacion
@@ -86,7 +86,7 @@ dat <- dat |>
          hj  = ifelse(cambio >= 0, -0.25, 1.25))
 
 # ---------------------------------------------------------------------------
-# 4. Figura (Cleveland dot plot)
+# 4. Figura (dot plot)
 # ---------------------------------------------------------------------------
 
 fig <- ggplot(dat, aes(x = cambio, y = pais, colour = grupo)) +
@@ -146,7 +146,7 @@ nota <- paste0(
   ") e importadores netos (N = ", n_imp, "). N = ", n_pais, " paises."
 )
 
-save_fig_png(fig, "fig2_impacto.png", nota = nota,
+save_fig_png(fig, "fig3_impacto.png", nota = nota,
              fuente = "IMF Fossil Fuel Subsidies Database.",
              w = 7, h = 9, dpi = 300)
 
@@ -154,7 +154,7 @@ save_fig_png(fig, "fig2_impacto.png", nota = nota,
 # 6. Verificacion
 # ---------------------------------------------------------------------------
 
-out <- file.path(PATH$fig, "fig2_impacto.png")
+out <- file.path(PATH$fig, "fig3_impacto.png")
 stopifnot(file.exists(out), file.info(out)$size > 50000)
 message("\nVERIFICACION PASS: ", out, " (",
         round(file.info(out)$size / 1024, 1), " KB)")

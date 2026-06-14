@@ -228,35 +228,65 @@ save_fig_png <- function(plot, name, nota, fuente = NULL,
   stopifnot(requireNamespace("magick", quietly = TRUE))
   path <- file.path(PATH$fig, name)
   tmp  <- tempfile(fileext = ".png")
+  # bg = "white": theme_minimal deja el fondo NA; sin esto el PNG de cairo sale
+  # con fondo transparente, que se renderiza negro al visualizar o componer.
   ggsave(tmp, plot, width = w, height = h, dpi = dpi,
-         device = grDevices::png, type = "cairo")
+         device = grDevices::png, type = "cairo", bg = "white")
 
   img  <- magick::image_read(tmp)
   w_px <- magick::image_info(img)$width
 
   # Nota al pie de corrido. La fuente se fija a un tamano PROPORCIONAL al chart
-  # (~8pt = dpi*0.11 px), no se infla para llenar el ancho: forzar el texto de
-  # borde a borde lo agranda mas que los ejes de la figura. El texto se envuelve
-  # dentro del ancho disponible. El ancho medio de caracter Times en magick es
-  # ~0.46 px por unidad de fuente: con 0.404 el texto se desbordaba por el borde
-  # derecho en figuras angostas (dot plot); con 0.52 quedaba demasiado corto,
-  # dejando aire a la derecha en figuras anchas (fig1). 0.46 llena casi hasta el
-  # borde sin desbordar en ninguno de los dos formatos.
+  # (~8pt = dpi*0.11 px). El ancho de envoltura no se adivina con un factor: se
+  # MIDE. Se calcula el ancho real en px por caracter renderizando una muestra
+  # con magick (image_trim), y se busca el mayor `por_linea` cuya linea mas larga
+  # tras strwrap aun quepa en el ancho disponible. Asi el texto llena de extremo
+  # a extremo sin desbordar, en cualquier formato de figura (ancha o angosta).
   texto     <- paste0("Notas. ", nota,
                       if (!is.null(fuente)) paste0(" Fuente: ", fuente))
-  margen    <- as.integer(round(dpi * 0.12))
-  ancho_txt <- w_px - 2 * margen
-  fs        <- as.integer(round(dpi * 0.11))      # ~33px = 8pt a 300dpi
-  por_linea <- floor(ancho_txt / (fs * 0.46))     # cols que caben a esa fuente
-  envuelto  <- paste(strwrap(texto, width = por_linea), collapse = "\n")
-  n_lineas  <- length(strsplit(envuelto, "\n")[[1L]])
-  h_nota    <- n_lineas * round(fs * 1.45) + margen
+  margen     <- as.integer(round(dpi * 0.12))     # padding vertical de la nota
+  margen_lat <- as.integer(round(dpi * 0.05))     # padding lateral (menor: el
+                                                  # texto llega mas a los bordes)
+  ancho_txt  <- w_px - 2 * margen_lat
+  fs         <- as.integer(round(dpi * 0.11))     # ~33px = 8pt a 300dpi
 
-  lienzo <- magick::image_blank(w_px, h_nota, color = "white")
-  lienzo <- magick::image_annotate(lienzo, envuelto, font = "Times",
+  # Ancho real en px de una cadena Times a tamano fs (medido, no estimado)
+  ancho_px <- function(s) {
+    if (nchar(s) == 0L) return(0L)
+    m <- magick::image_blank(w_px * 2L, fs * 3L, "white")
+    m <- magick::image_annotate(m, s, font = "Times", size = fs,
+                                location = "+0+0", gravity = "northwest")
+    magick::image_info(magick::image_trim(m))$width
+  }
+  # Linea mas ancha tras envolver a `cols` caracteres
+  max_ancho <- function(cols) {
+    ls <- strwrap(texto, width = cols)
+    max(vapply(ls, ancho_px, integer(1L)))
+  }
+  # Buscar el mayor cols cuya linea mas larga aun cabe en ancho_txt
+  cols <- 40L
+  while (max_ancho(cols + 5L) <= ancho_txt) cols <- cols + 5L
+  while (cols > 10L && max_ancho(cols) > ancho_txt) cols <- cols - 2L
+
+  envuelto  <- paste(strwrap(texto, width = cols), collapse = "\n")
+  n_lineas  <- length(strsplit(envuelto, "\n")[[1L]])
+
+  # Render de la nota en un lienzo holgado y RECORTE al alto real del texto
+  # (image_trim), para no dejar franja blanca sobrante bajo la ultima linea.
+  # Luego se re-pega con un padding uniforme arriba y abajo (= margen / 2).
+  pad     <- as.integer(round(margen / 2))
+  alto_max <- n_lineas * round(fs * 1.6) + 4L * margen
+  bloque  <- magick::image_blank(w_px, alto_max, "white")
+  bloque  <- magick::image_annotate(bloque, envuelto, font = "Times",
              size = fs, color = WB_TEXT,
-             location = paste0("+", margen, "+", round(margen / 2)),
+             location = paste0("+", margen_lat, "+", pad),
              gravity = "northwest")
+  bloque  <- magick::image_trim(bloque)                  # recorta al texto
+  lienzo  <- magick::image_border(bloque, "white",
+             paste0(margen_lat, "x", pad))               # padding lateral menor
+  lienzo  <- magick::image_extent(lienzo, paste0(w_px, "x",
+             magick::image_info(lienzo)$height),
+             gravity = "west", color = "white")          # restaura ancho pleno
   final  <- magick::image_append(c(img, lienzo), stack = TRUE)
   magick::image_write(final, path, format = "png", density = dpi)
   message("Figura guardada: ", path, " (PNG ", dpi, " dpi)")
